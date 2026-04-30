@@ -281,3 +281,45 @@ print(chunks[0].page_content)
 print("-" * 60)
 print(f"  元数据: {chunks[0].metadata}")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 2 章：向量化 + 存入 FAISS 向量数据库
+# 目标：把每个文本块变成数字向量，存入内存索引
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 2 章：向量化 + 存入 FAISS")
+print("=" * 60)
+print()
+print("【正在向量化所有文本块，请稍候（需要调用 Embedding API）...】")
+
+# ── 核心操作：一行代码完成"向量化 + 建索引" ──────────────────
+#
+# FAISS.from_documents() 做了什么？
+#   ① 遍历 chunks 列表中的每个 Document
+#   ② 调用 embeddings.embed_documents() 把文本 → 向量（float 列表）
+#   ③ 把所有向量存入 FAISS 索引（内存中的高速相似度搜索引擎）
+#
+# ⚠️ 避坑指南：FAISS 是纯内存索引！
+#   程序退出后，索引消失，需要重新构建。
+#   如果需要持久化，可以用：
+#     vectorstore.save_local("./faiss_index")
+#   下次用：
+#     vectorstore = FAISS.load_local("./faiss_index", embeddings,
+#                                    allow_dangerous_deserialization=True)
+#   本教学代码为了简洁，不做持久化。
+
+vectorstore = FAISS.from_documents(
+    documents=chunks,       # 所有文本块（来自第1章）
+    embedding=embeddings,   # 用第0章初始化的 Embeddings 客户端
+)
+
+print("✅ 向量化完成！FAISS 索引已建立")
+print(f"   已存入向量数量: {vectorstore.index.ntotal} 个")
+print(f"   （等于切块数量 {len(chunks)}，每块对应一个向量）")
+print()
+print("💡 向量是什么？")
+print("   每个文本块 → 一个 float 列表（例如 1536 维）")
+print("   含义相近的文本 → 向量在高维空间里距离更近")
+print("   检索时：把问题也变成向量，找距离最近的 k 个文本块")
+print()
