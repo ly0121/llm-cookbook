@@ -263,3 +263,157 @@ print(f"  内容: {parsed_output}")
 print()
 print("💡 结论：StrOutputParser 把 AIMessage 对象剥开，只留下 .content 文本")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 4 章：带历史记忆的完整聊天机器人
+# 目标：理解 RunnableWithMessageHistory 如何管理多轮对话
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 4 章：带记忆的聊天机器人")
+print("=" * 60)
+print()
+print("【核心概念：为什么需要手动管理记忆？】")
+print("""
+  LLM 本身是"无状态"的——它不记得之前说过什么。
+  每次调用 LLM，对它来说都是一次全新的对话。
+
+  要实现"记得之前说过什么"，我们必须：
+  ① 把之前所有的对话记录存起来（Memory）
+  ② 每次调用时，把历史记录一并发给 LLM
+  ③ LLM 读取历史，才能"理解上下文"
+
+  RunnableWithMessageHistory 帮我们自动完成了②③步！
+  我们只需要关心①：提供一个"历史存储"。
+""")
+
+# ─── 搭建记忆系统 ───────────────────────────────────────
+
+# 用一个字典来存储所有会话的历史
+# key   = session_id（会话ID，用来区分不同的对话）
+# value = ChatMessageHistory（该会话的消息历史对象）
+#
+# 这就是最简单的"内存数据库"
+# 生产环境中，这里可以换成 Redis、MongoDB 等持久化存储
+store: dict[str, BaseChatMessageHistory] = {}
+
+
+def get_session_history(session_id: str) -> BaseChatMessageHistory:
+    """
+    根据 session_id 获取对应的消息历史。
+
+    这个函数是 RunnableWithMessageHistory 的"钥匙"——
+    它告诉 LangChain："去哪里找这个会话的历史记录"。
+
+    如果是新会话（session_id 不存在），就创建一个空的历史。
+    如果是老会话，就返回已有的历史。
+    """
+    # 如果这个 session_id 还没有历史记录，就创建一个新的
+    if session_id not in store:
+        # ChatMessageHistory 是一个消息列表的包装器
+        # 它会自动维护 [HumanMessage, AIMessage, HumanMessage, AIMessage...] 的列表
+        store[session_id] = ChatMessageHistory()
+        print(f"  📝 新建会话历史，session_id='{session_id}'")
+
+    return store[session_id]
+
+
+# ─── 构建带记忆的提示词模板 ─────────────────────────────
+
+# 这个模板比第1章的复杂一点：多了 MessagesPlaceholder
+#
+# MessagesPlaceholder 是一个"神奇的占位符"：
+# 它会在提示词里留一个"洞"，专门用来塞入历史消息列表
+# variable_name="history" 表示：这个洞的名字叫 "history"
+# RunnableWithMessageHistory 在调用时会自动把历史消息填进这个洞
+chat_prompt = ChatPromptTemplate.from_messages([
+    # 系统角色设定
+    ("system", "你是一个友善的 AI 助手，请用中文回答问题。保持回答简洁（100字以内）。"),
+
+    # ⚠️ 避坑指南：MessagesPlaceholder 的位置很重要！
+    # 它必须放在 system 消息之后、最新的 human 消息之前。
+    # 这样 LLM 才能先看到角色设定，再看历史，最后看最新问题。
+    MessagesPlaceholder(variable_name="history"),
+
+    # 最新的用户输入
+    ("human", "{input}"),
+])
+
+# ─── 构建基础链（不含记忆）───────────────────────────────
+
+# 先构建一条普通的链：提示词 → LLM → 解析
+base_chain = chat_prompt | llm | parser
+
+# ─── 用 RunnableWithMessageHistory 包装基础链 ────────────
+
+# 这是最关键的一步！
+#
+# RunnableWithMessageHistory 就像给基础链套了一个"记忆外壳"：
+# ① 调用前：自动从 get_session_history 取出历史，填入 "history" 占位符
+# ② 调用后：自动把这一轮的 human 输入和 ai 回复保存到历史里
+#
+# 参数说明：
+#   runnable             = 被包装的基础链
+#   get_session_history  = 告诉它"如何获取历史"的函数（我们上面定义的）
+#   input_messages_key   = 用户输入对应模板里哪个变量（我们的是 "input"）
+#   history_messages_key = 历史消息对应模板里哪个占位符（我们的是 "history"）
+chain_with_memory = RunnableWithMessageHistory(
+    runnable=base_chain,
+    get_session_history=get_session_history,
+    input_messages_key="input",
+    history_messages_key="history",
+)
+
+print("✅ 带记忆的聊天链构建完成！")
+print()
+
+# ─── 打印提示词结构，让你看清 MessagesPlaceholder ─────────
+
+print("【聊天提示词模板结构】")
+for msg in chat_prompt.messages:
+    print(f"  {msg}")
+print()
+
+# ─── 启动控制台聊天循环 ──────────────────────────────────
+
+# 设定一个固定的 session_id（在生产应用中，这通常是用户ID或对话ID）
+SESSION_ID = "tutorial_session_001"
+
+print("=" * 60)
+print("🤖 聊天机器人启动！（输入 'quit' 退出）")
+print("=" * 60)
+print()
+
+while True:
+    # 获取用户输入
+    user_input = input("你：").strip()
+
+    # 处理退出命令
+    if user_input.lower() in ("quit", "exit", "退出", "q"):
+        print("\n再见！本次对话结束。")
+        break
+
+    # 跳过空输入
+    if not user_input:
+        continue
+
+    # ── 调用带记忆的链 ──
+    # 注意 config 参数：通过 configurable.session_id 传入会话ID
+    # RunnableWithMessageHistory 会把 session_id 传给 get_session_history 函数
+    response = chain_with_memory.invoke(
+        # 这里只需要传当前用户的输入，历史会被自动注入！
+        {"input": user_input},
+        # config 是 LangChain 的"运行时配置"，不属于提示词变量
+        config={"configurable": {"session_id": SESSION_ID}},
+    )
+
+    # ── 打印 AI 回复 ──
+    print(f"\nAI：{response}\n")
+
+    # ── 打印当前记忆状态（教学用，方便观察记忆在增长）──
+    history = store.get(SESSION_ID)
+    if history:
+        msg_count = len(history.messages)
+        print(f"  💾 [记忆状态] 当前会话共存储 {msg_count} 条消息 "
+              f"（{msg_count // 2} 轮对话）")
+        print()
