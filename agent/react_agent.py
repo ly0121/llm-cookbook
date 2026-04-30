@@ -184,7 +184,7 @@ def calculate_power(base_and_exponent: str) -> str:
         result = base ** exponent
         return f"{base} 的 {exponent} 次方 = {result}"
     except (ValueError, IndexError):
-        return f"参数格式错误，请使用逗号分隔的整数，例如：2,10"
+        return "参数格式错误，请使用逗号分隔的整数，例如：2,10"
 
 
 # ── 打印工具元数据，让你看清楚 @tool 做了什么 ────────────────
