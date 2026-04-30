@@ -104,3 +104,113 @@ print(f"✅ OpenAI 原生客户端初始化完成")
 print(f"   模型: {MODEL_NAME}")
 print(f"   接口: {BASE_URL}")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 1 章：阻塞式调用 + 原始数据包解剖
+# 目标：看清楚 OpenAI API 返回的完整原始对象长什么样
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 1 章：阻塞式调用 + 原始数据包解剖")
+print("=" * 60)
+print()
+
+# ── 构造 messages 数组 ────────────────────────────────────
+#
+# messages 是发给 API 的核心数据，本质是一个 JSON 数组。
+# 每个元素是一个对象，有两个字段：
+#   "role"    → 角色，只能是 "system" / "user" / "assistant"
+#   "content" → 这条消息的具体内容（字符串）
+#
+# 发给 OpenAI 服务器时，它长这样（JSON 格式）：
+# [
+#   {"role": "system",  "content": "你是..."},
+#   {"role": "user",    "content": "..."}
+# ]
+
+messages = [
+    {
+        "role": "system",
+        # 导演指令：给 AI 设定角色和约束
+        # 这条消息用户看不到，但 AI 会严格遵守
+        "content": "你是一个严谨的科普作家，用通俗易懂的语言解释复杂概念，回答控制在60字以内。",
+    },
+    {
+        "role": "user",
+        # 用户提问：这一轮我们问的问题
+        "content": "黑洞是什么？",
+    },
+]
+
+print("【发送给 API 的 messages 数组】")
+for i, msg in enumerate(messages):
+    print(f"  [{i}] role={msg['role']!r:12s}  content={msg['content'][:40]!r}...")
+print()
+
+# ── 发起阻塞式 API 调用 ───────────────────────────────────
+#
+# "阻塞式"的意思：代码执行到这一行后会"暂停"，
+# 等待 API 服务器处理完毕并返回完整结果后，才继续向下执行。
+# 就像打电话：你说完话，必须等对方把整段话都说完才挂断。
+
+print("【正在调用 API（阻塞中，请稍候...）】")
+
+response = client.chat.completions.create(
+    model=MODEL_NAME,       # 指定模型
+    messages=messages,      # 发送对话历史
+    temperature=0.7,        # 温度：0.7 = 黄金平衡点（见文件头科普）
+    max_tokens=200,         # 最多生成 200 个 token（防止回复过长）
+    # stream=False          # 默认就是 False（阻塞式），注释掉是为了和第2章对比
+)
+
+# ── 解剖原始返回对象 ──────────────────────────────────────
+#
+# response 是一个 ChatCompletion 对象，不是普通字符串！
+# LangChain 的 StrOutputParser 做的事情，就是把这个对象"剥开"
+# 只取出 content 字符串。现在我们自己动手剥一遍，更有感觉。
+
+print()
+print("【API 返回的完整原始对象（这就是 OpenAI 服务器发回来的数据）】")
+print("-" * 60)
+print(response)  # 打印整个对象，让你看到所有字段
+print("-" * 60)
+print()
+
+# ── 逐层解剖每个关键字段 ──────────────────────────────────
+
+print("【逐层解剖关键字段】")
+print()
+
+# choices：一个列表，通常只有一个元素（除非你设置了 n>1 要求多个备选）
+# choices[0] 就是 AI 的第一条（也是唯一一条）回复
+print(f"  ① response.choices  （类型: {type(response.choices)}，长度: {len(response.choices)}）")
+print(f"     → choices 是一个列表，每个元素是一个候选回复（通常只有 1 个）")
+print()
+
+# message：这一轮的完整消息对象（包含 role 和 content）
+print(f"  ② response.choices[0].message  （类型: {type(response.choices[0].message).__name__}）")
+print(f"     → role: {response.choices[0].message.role!r}")
+print(f"     → content（AI 实际说的话）：")
+print(f"       【{response.choices[0].message.content}】")
+print()
+
+# finish_reason：AI 为什么停止生成？
+# "stop"           → 自然结束（最常见，AI 认为回答完整了）
+# "length"         → 达到了 max_tokens 限制被截断（增大 max_tokens 可解决）
+# "content_filter" → 内容被安全过滤器拦截
+print(f"  ③ response.choices[0].finish_reason: {response.choices[0].finish_reason!r}")
+print(f"     → 'stop' = AI 自然结束  'length' = 被 max_tokens 截断")
+print()
+
+# usage：这次调用消耗了多少 token（计费的依据！）
+# prompt_tokens     = 你发过去的 messages 用了多少 token
+# completion_tokens = AI 回复用了多少 token
+# total_tokens      = 两者之和（就是这次调用的计费量）
+print(f"  ④ response.usage（Token 消耗统计）：")
+print(f"     → prompt_tokens（你的输入）:    {response.usage.prompt_tokens}")
+print(f"     → completion_tokens（AI 输出）: {response.usage.completion_tokens}")
+print(f"     → total_tokens（本次总消耗）:   {response.usage.total_tokens}")
+print()
+print("💡 小结：LangChain 的 StrOutputParser 做的事，等价于：")
+print("   response.choices[0].message.content")
+print()
