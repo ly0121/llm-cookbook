@@ -236,7 +236,7 @@ raw_document = Document(
     metadata={"source": "ai_history.txt", "topic": "人工智能发展简史"},
 )
 
-print(f"【原始文档信息】")
+print("【原始文档信息】")
 print(f"  来源: {raw_document.metadata['source']}")
 print(f"  总字符数: {len(raw_document.page_content)} 字")
 print()
@@ -267,7 +267,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 # 把单个 Document 对象切割成多个小块（仍然是 Document 列表）
 chunks = text_splitter.split_documents([raw_document])
 
-print(f"【文本切块结果】")
+print("【文本切块结果】")
 print(f"  原始文档 {len(raw_document.page_content)} 字 → 切成 {len(chunks)} 块")
 print()
 
