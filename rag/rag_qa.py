@@ -121,6 +121,7 @@ llm = ChatOpenAI(
 # 初始化本地 Embeddings 客户端
 # HuggingFaceEmbeddings 在本机 CPU/GPU 上运行，不调用任何外部 API
 # 它的作用：把文本字符串 → 数字向量（一个 float 列表），和 OpenAIEmbeddings 接口完全一样
+# 如有 GPU/Apple MPS 可加 model_kwargs={"device": "cuda"} 或 {"device": "mps"} 参数以加速
 embeddings = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL,
 )
@@ -289,7 +290,7 @@ print("=" * 60)
 print("第 2 章：向量化 + 存入 FAISS")
 print("=" * 60)
 print()
-print("【正在向量化所有文本块，请稍候（需要调用 Embedding API）...】")
+print("【正在向量化所有文本块，请稍候（本地推理，首次运行需加载模型文件）...】")
 
 # ── 核心操作：一行代码完成"向量化 + 建索引" ──────────────────
 #
