@@ -167,7 +167,7 @@ def get_weather(city: str) -> str:
 @tool
 def calculate_power(base: int, exponent: int) -> str:
     """计算一个整数的幂次方（base 的 exponent 次方）。
-    例如：base=2, exponent=10 → 返回 1024。
+    例如：base=2, exponent=10 → 返回 "2 的 10 次方 = 1024"。
     当用户需要精确的数学幂次计算时使用此工具。
     注意：只接受整数输入。"""
     result = base ** exponent
