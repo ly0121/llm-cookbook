@@ -108,3 +108,84 @@ llm = ChatOpenAI(
 print("✅ LLM 初始化完成")
 print(f"   模型: {MODEL_NAME}")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 1 章：用 @tool 装饰器定义工具
+# 目标：把普通 Python 函数变成 Agent 可以调用的工具
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 1 章：工具定义（@tool 装饰器）")
+print("=" * 60)
+print()
+
+# ── Mock 天气数据 ─────────────────────────────────────────
+#
+# 真实场景：调用 OpenWeatherMap 等天气 API
+# 教学场景：用固定字典模拟，省去 API Key 和网络请求
+
+WEATHER_DATA = {
+    "北京": {"weather": "晴", "temperature": 28},
+    "上海": {"weather": "多云", "temperature": 24},
+    "广州": {"weather": "阵雨", "temperature": 32},
+    "成都": {"weather": "阴", "temperature": 20},
+}
+
+
+# ── 工具一：天气查询 ──────────────────────────────────────
+#
+# @tool 装饰器做了三件事：
+#   ① 把函数名 → tool.name（Agent 用这个名字调用工具）
+#   ② 把函数 docstring → tool.description（⭐ 最重要！）
+#   ③ 把函数参数类型注解 → tool.args_schema（LLM 靠这个知道怎么传参数）
+#
+# ⚠️ 避坑指南：description 写不清楚后果很严重！
+#   description 是 LLM 判断"要不要用这个工具"的唯一依据。
+#   如果写成"查天气"——太模糊，LLM 可能不知道什么时候该调用它。
+#   应该写清楚：① 这个工具做什么 ② 输入格式 ③ 返回什么
+#
+# ⚠️ 避坑指南：参数必须有类型注解！
+#   @tool 依赖类型注解（city: str）生成 args_schema，
+#   缺少类型注解时 LLM 不知道应该传什么类型的参数。
+
+@tool
+def get_weather(city: str) -> str:
+    """查询指定城市的实时天气信息，返回天气状况和温度（摄氏度）。
+    输入城市名（中文），例如"北京"、"上海"、"广州"、"成都"。
+    当用户询问某个城市的天气、温度、气候时使用此工具。"""
+    data = WEATHER_DATA.get(city)
+    if data:
+        return f"{city}：{data['weather']}，温度 {data['temperature']}°C"
+    return f"暂无 {city} 的天气数据，目前支持：{'、'.join(WEATHER_DATA.keys())}"
+
+
+# ── 工具二：幂次计算 ──────────────────────────────────────
+#
+# 这个工具做真实计算（不是 mock），结果可以验证。
+# 演示"工具可以是任何 Python 函数"——查询、计算、文件操作……
+
+@tool
+def calculate_power(base: int, exponent: int) -> str:
+    """计算一个整数的幂次方（base 的 exponent 次方）。
+    例如：base=2, exponent=10 → 返回 1024。
+    当用户需要精确的数学幂次计算时使用此工具。
+    注意：只接受整数输入。"""
+    result = base ** exponent
+    return f"{base} 的 {exponent} 次方 = {result}"
+
+
+# ── 打印工具元数据，让你看清楚 @tool 做了什么 ────────────────
+
+tools = [get_weather, calculate_power]
+
+print("【@tool 装饰器为每个工具生成的元数据】")
+print()
+for t in tools:
+    print(f"  工具名称 (name):        {t.name}")
+    print(f"  工具描述 (description): {t.description[:60]}...")
+    print(f"  参数结构 (args_schema): {t.args_schema.schema()['properties']}")
+    print()
+
+print("💡 LLM 接收到的工具信息就是上面这些。")
+print("   它靠 description 决定用哪个工具，靠 args_schema 知道怎么传参数。")
+print()
