@@ -189,3 +189,102 @@ for t in tools:
 print("💡 LLM 接收到的工具信息就是上面这些。")
 print("   它靠 description 决定用哪个工具，靠 args_schema 知道怎么传参数。")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 2 章：构建 ReAct Agent
+# 目标：把 LLM + 工具 + Prompt 组装成一个 Agent
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 2 章：构建 ReAct Agent")
+print("=" * 60)
+print()
+
+# ── ReAct Prompt 模板 ─────────────────────────────────────
+#
+# create_react_agent 需要一个包含四个占位符的 PromptTemplate：
+#
+#   {tools}            → 所有工具的名称 + description 拼接文本
+#                        AgentExecutor 会自动填入，LLM 靠这个认识工具
+#   {tool_names}       → 工具名称列表（逗号分隔）
+#                        用于格式约束：告诉 LLM "Action 只能是这些名字之一"
+#   {input}            → 用户的实际问题
+#   {agent_scratchpad} → Agent 的历史推理记录（上一轮的 Thought/Action/Observation）
+#                        LLM 靠这个"记住"之前做了什么，避免重复调用工具
+#
+# ⚠️ 避坑指南：四个占位符缺一不可！
+#   如果 prompt 里漏掉任何一个，create_react_agent 会抛出 ValueError。
+#
+# 注意：这里使用 PromptTemplate（不是 ChatPromptTemplate）
+#   因为 ReAct 格式是纯文本协议，不区分 system/human 角色。
+
+REACT_PROMPT_TEMPLATE = """你是一个严谨、有条理的 AI 助手。你可以使用以下工具来回答用户的问题：
+
+{tools}
+
+回答问题时，请严格按照以下格式逐行输出（不要跳过任何步骤）：
+
+Question: 你需要回答的问题
+Thought: 分析当前情况，决定下一步行动
+Action: 选择要使用的工具，必须是 [{tool_names}] 中的一个
+Action Input: 传给工具的参数（直接写值，不要加引号或 JSON 格式）
+Observation: （工具返回的结果，由系统填入，你不需要编写这行）
+...（以上 Thought/Action/Action Input/Observation 可以重复多次）
+Thought: 我现在已经有足够的信息来回答问题了
+Final Answer: 对用户原始问题的完整回答
+
+现在开始！
+
+Question: {input}
+Thought:{agent_scratchpad}"""
+
+react_prompt = PromptTemplate.from_template(REACT_PROMPT_TEMPLATE)
+
+print("【ReAct Prompt 模板已定义】")
+print("   包含四个必填占位符：{tools} {tool_names} {input} {agent_scratchpad}")
+print()
+
+# ── 创建 Agent ─────────────────────────────────────────────
+#
+# create_react_agent 把三个组件组装成一个"决策单元"（Agent）：
+#   llm    → 负责推理：读取 Thought，决定下一步 Action
+#   tools  → 可调用的工具列表
+#   prompt → ReAct 格式的提示词模板
+#
+# 返回的 agent 本身是一个 Runnable，不能直接 invoke——
+# 需要包在 AgentExecutor 里才能运行完整的 ReAct 循环。
+
+agent = create_react_agent(llm, tools, react_prompt)
+
+# ── 创建 AgentExecutor ────────────────────────────────────
+#
+# AgentExecutor 是 Agent 的"运行引擎"，负责：
+#   ① 调用 agent 做推理，解析 Action 和 Action Input
+#   ② 找到对应的工具函数并执行
+#   ③ 把 Observation（工具返回值）传回给 agent 继续推理
+#   ④ 循环直到 agent 输出 Final Answer
+#
+# 关键参数说明：
+#   verbose=True         → 打印每一步 Thought/Action/Observation（教学必备！）
+#   handle_parsing_errors→ LLM 输出格式不标准时不 crash，让 Agent 自我纠正
+#   max_iterations=5     → 最多循环 5 次，防止 Agent 陷入死循环
+#
+# ⚠️ 避坑指南：handle_parsing_errors=True 一定要加！
+#   LLM 偶尔会输出格式不标准的内容（比如 Action 前多了空格），
+#   不加这个参数时会直接抛出 OutputParserException，导致程序崩溃。
+
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,               # 打印完整 ReAct 循环（Thought/Action/Observation）
+    handle_parsing_errors=True, # 格式错误时自我纠正，而不是崩溃
+    max_iterations=5,           # 最多循环 5 次，防止死循环
+)
+
+print("✅ Agent 构建完成！")
+print("   agent_executor 已准备好，调用 agent_executor.invoke({'input': '...'}) 即可运行")
+print()
+print("💡 小结：三个组件的分工")
+print("   create_react_agent(llm, tools, prompt) → 决策单元（知道怎么想）")
+print("   AgentExecutor(agent, tools, verbose=True) → 执行引擎（负责跑循环）")
+print()
