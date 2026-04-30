@@ -383,3 +383,114 @@ show_retrieval_results("深度学习是什么时候兴起的？")
 print("💡 小结：RAG 的检索步骤就是这些。")
 print("   大模型看到的'参考资料'，就是这几个文本块！")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 4 章：完整 RAG 问答链（LCEL 语法）
+# 目标：把检索器、提示词、LLM 串联成一条完整的 RAG 链
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 4 章：完整 RAG 问答链")
+print("=" * 60)
+print()
+
+# ── 构建 RAG 提示词模板 ──────────────────────────────────
+#
+# RAG 提示词的关键：把"检索到的上下文"和"用户问题"都塞进去
+# 并明确告诉 LLM "只能基于这些资料回答，不能乱编"
+
+rag_prompt = ChatPromptTemplate.from_messages([
+    ("system", """你是一个严谨的知识库问答助手。
+请仅根据下面提供的【参考资料】来回答用户的问题。
+如果参考资料中没有相关信息，请直接说"根据现有资料，我无法回答这个问题"，不要猜测或编造。
+
+【参考资料】
+{context}"""),
+    ("human", "{question}"),
+])
+
+# ── 构建文档格式化函数 ────────────────────────────────────
+#
+# retriever 返回的是 Document 对象列表，
+# 但提示词模板里的 {context} 需要字符串。
+# 这个函数把多个文档块拼接成一段文字。
+
+def format_docs(docs: list) -> str:
+    """把检索到的文档块列表拼接成字符串，用分隔符隔开"""
+    return "\n\n---\n\n".join(
+        f"[来源: {doc.metadata.get('source', '未知')}]\n{doc.page_content}"
+        for doc in docs
+    )
+
+# ── 构建 RAG 链（LCEL 语法） ──────────────────────────────
+#
+# 数据流解析：
+#
+#   输入：{"question": "用户的问题字符串"}
+#       ↓
+#   RunnableParallel（并行处理，同时做两件事）：
+#     ├── "context"  : retriever | format_docs  → 把相关文本块拼成字符串
+#     └── "question" : RunnablePassthrough()    → 原样保留用户问题
+#       ↓
+#   输出：{"context": "相关文本...", "question": "用户的问题"}
+#       ↓
+#   rag_prompt  →  填充模板，生成完整的提示词
+#       ↓
+#   llm         →  调用大模型，得到 AIMessage
+#       ↓
+#   parser      →  提取纯文本字符串
+#
+# ⚠️ 避坑指南：RunnablePassthrough 的作用
+#   它不是"什么都不做"，而是"把输入原封不动地传给下一步"。
+#   在 RunnableParallel 中，如果没有它，"question"键就会丢失！
+
+parser = StrOutputParser()
+
+rag_chain = (
+    RunnableParallel(
+        context=retriever | format_docs,       # 检索 → 格式化为字符串
+        question=RunnablePassthrough(),         # 原样保留问题字符串
+    )
+    | rag_prompt
+    | llm
+    | parser
+)
+
+print("✅ RAG 链构建完成！")
+print("   链的结构：RunnableParallel(context, question) | prompt | llm | parser")
+print()
+
+
+def rag_query(question: str) -> str:
+    """执行完整的 RAG 问答，先打印检索依据，再打印 AI 回答"""
+    print(f"{'=' * 60}")
+    print(f"❓ 问：{question}")
+    print(f"{'=' * 60}")
+
+    # 先单独检索，打印召回的原文（让你看到大模型"翻的是哪页书"）
+    retrieved_docs = retriever.invoke(question)
+    print(f"\n📚 检索召回了 {len(retrieved_docs)} 个相关文本块（大模型将基于这些资料回答）：")
+    for i, doc in enumerate(retrieved_docs, 1):
+        preview = doc.page_content[:120].replace("\n", " ")
+        print(f"   [{i}] {preview}...")
+
+    # 再调用完整 RAG 链得到答案
+    print("\n🤖 基于以上资料，AI 回答：")
+    answer = rag_chain.invoke(question)
+    print(f"   {answer}")
+    print()
+    return answer
+
+
+# ── 运行三轮问答演示 ──────────────────────────────────────
+print("【RAG 问答演示——三个问题】")
+print()
+
+rag_query("谁提出了图灵测试？在哪一年？")
+rag_query("深度学习的三大突破是什么？")
+rag_query("ChatGPT 是哪年发布的，发布后有什么影响？")
+
+print("=" * 60)
+print("🎉 项目二学习完毕！你已经掌握了 RAG 的完整工作流。")
+print("   核心公式：文档切块 + 向量化 + 相似度检索 + LLM 生成 = RAG")
+print("=" * 60)
