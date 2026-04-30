@@ -65,6 +65,9 @@ RAG 的四步工作流：
 from langchain_openai import ChatOpenAI
 
 # 本地向量化模型（不需要 API Key，模型文件自动下载到本地缓存）
+# ⚠️ 避坑指南：首次运行时需要从 HuggingFace Hub 下载模型文件（约 90MB），
+#   请确保网络畅通。模型下载后会缓存在 ~/.cache/huggingface/，后续运行无需重新下载。
+#   如遇网络问题，可设置环境变量：HF_ENDPOINT=https://hf-mirror.com（国内镜像）
 from langchain_huggingface import HuggingFaceEmbeddings
 
 # 输出解析器：把 AIMessage 对象转成纯字符串
@@ -318,7 +321,7 @@ print(f"   已存入向量数量: {vectorstore.index.ntotal} 个")
 print(f"   （等于切块数量 {len(chunks)}，每块对应一个向量）")
 print()
 print("💡 向量是什么？")
-print("   每个文本块 → 一个 float 列表（例如 1536 维）")
+print("   每个文本块 → 一个 float 列表（例如 512 维，bge-small-zh-v1.5 的维度）")
 print("   含义相近的文本 → 向量在高维空间里距离更近")
 print("   检索时：把问题也变成向量，找距离最近的 k 个文本块")
 print()
