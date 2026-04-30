@@ -119,3 +119,62 @@ print(f"✅ LLM 初始化完成")
 print(f"   模型: {MODEL_NAME}")
 print(f"   接口: {BASE_URL}")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 1 章：PromptTemplate（提示词模板）
+# 目标：理解为什么要用模板，而不是直接拼字符串
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 1 章：PromptTemplate 演示")
+print("=" * 60)
+
+# 为什么要用 PromptTemplate，而不是直接 f-string 拼字符串？
+#
+# 想象你是一个翻译公司，每天要翻译不同语言的文件：
+#   "请把以下{source_lang}文本翻译成{target_lang}：\n{text}"
+#
+# 用 f-string 的问题：
+#   ① 变量和模板混在一起，难以维护
+#   ② 无法复用（每次都要重写）
+#   ③ 无法做类型检查（变量名写错了不会报错）
+#
+# PromptTemplate 解决了这些问题，并且还能：
+#   ① 序列化（保存到文件、数据库）
+#   ② 版本管理
+#   ③ 与 LCEL 管道无缝集成
+
+# 创建一个聊天提示词模板
+# from_messages 方法接受一个消息列表，每个消息是 (角色, 内容) 的元组
+# 角色有三种：
+#   "system"  - 系统指令，设定 AI 的"人设"（用户看不到，但 AI 会遵守）
+#   "human"   - 用户说的话
+#   "ai"      - AI 说的话（用于少样本示例，few-shot）
+demo_prompt = ChatPromptTemplate.from_messages([
+    # system 消息：设定 AI 的角色和规则
+    # {topic} 是一个变量，花括号括起来的都是变量
+    ("system", "你是一位专业的{topic}领域专家，请用通俗易懂的语言回答问题。"),
+    # human 消息：用户的提问
+    # {question} 也是变量
+    ("human", "{question}"),
+])
+
+# 打印模板的"原始样子"——让你看清楚模板的内部结构
+print("【模板原始结构】")
+print(demo_prompt)
+print()
+
+# 用 .invoke() 方法填充变量，生成真正的提示词
+# 这一步叫"模板渲染"，就像把合同模板填写成具体合同
+filled_prompt = demo_prompt.invoke({
+    "topic": "Python 编程",
+    "question": "什么是列表推导式？"
+})
+
+# 打印填充后的提示词，让你看到 LLM 实际收到的内容
+print("【填充变量后的提示词（LLM 将收到这个）】")
+for message in filled_prompt.messages:
+    # message.type 是消息类型（system/human/ai）
+    # message.content 是消息内容
+    print(f"  [{message.type.upper()}] {message.content}")
+print()
