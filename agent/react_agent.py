@@ -352,7 +352,7 @@ run_demo("单工具调用（天气查询）", "北京今天天气怎么样？")
 # 期望 Agent 行为：
 #   Thought: 用户要计算 2 的 10 次方，我需要用 calculate_power 工具
 #   Action: calculate_power
-#   Action Input: 2, 10  （或 JSON 格式，取决于 LLM）
+#   Action Input: 2,10  （纯文本字符串，ReAct 格式）
 #   Observation: 2 的 10 次方 = 1024
 #   Final Answer: 2 的 10 次方是 1024。
 
