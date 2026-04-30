@@ -165,11 +165,32 @@ def get_weather(city: str) -> str:
 # 演示"工具可以是任何 Python 函数"——查询、计算、文件操作……
 
 @tool
-def calculate_power(base: int, exponent: int) -> str:
+def calculate_power(base_and_exponent: str) -> str:
     """计算一个整数的幂次方（base 的 exponent 次方）。
-    例如：base=2, exponent=10 → 返回 "2 的 10 次方 = 1024"。
-    当用户需要精确的数学幂次计算时使用此工具。
-    注意：只接受整数输入。"""
+    输入格式：用逗号分隔底数和指数，例如 "2,10" 表示计算 2 的 10 次方，返回 "2 的 10 次方 = 1024"。
+    当用户需要精确的数学幂次计算时使用此工具。"""
+    import json
+    # 支持多种输入格式：JSON {"base":2,"exponent":10}、逗号分隔 "2,10"、空格分隔 "2 10"
+    text = base_and_exponent.strip()
+    if text.startswith("{"):
+        try:
+            data = json.loads(text)
+            base = int(data.get("base") or data.get("底数") or list(data.values())[0])
+            exponent = int(data.get("exponent") or data.get("指数") or list(data.values())[1])
+        except Exception:
+            return "参数格式错误，请使用格式：底数,指数（例如：2,10）"
+    elif "," in text:
+        parts = [p.strip() for p in text.split(",", 1)]
+        try:
+            base, exponent = int(parts[0]), int(parts[1])
+        except Exception:
+            return "参数格式错误，请使用格式：底数,指数（例如：2,10）"
+    else:
+        parts = text.split()
+        try:
+            base, exponent = int(parts[0]), int(parts[1])
+        except Exception:
+            return "参数格式错误，请使用格式：底数,指数（例如：2,10）"
     result = base ** exponent
     return f"{base} 的 {exponent} 次方 = {result}"
 
@@ -227,7 +248,7 @@ REACT_PROMPT_TEMPLATE = """你是一个严谨、有条理的 AI 助手。你可�
 Question: 你需要回答的问题
 Thought: 分析当前情况，决定下一步行动
 Action: 选择要使用的工具，必须是 [{tool_names}] 中的一个
-Action Input: 传给工具的参数（直接写值，不要加引号或 JSON 格式）
+Action Input: 传给工具的参数（直接写值，多个参数用逗号分隔，例如：2,10）
 Observation: （工具返回的结果，由系统填入，你不需要编写这行）
 ...（以上 Thought/Action/Action Input/Observation 可以重复多次）
 Thought: 我现在已经有足够的信息来回答问题了
@@ -288,3 +309,75 @@ print("💡 小结：三个组件的分工")
 print("   create_react_agent(llm, tools, prompt) → 决策单元（知道怎么想）")
 print("   AgentExecutor(agent, tools, verbose=True) → 执行引擎（负责跑循环）")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 3 章：运行演示——亲眼看到 ReAct 循环
+# 目标：观察 Agent 如何思考、调用工具、得出答案
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 3 章：ReAct Agent 演示")
+print("=" * 60)
+print()
+print("【提示】下方输出中：")
+print("  > Entering new AgentExecutor chain... → Agent 开始运行")
+print("  Thought: ...  → LLM 的推理过程")
+print("  Action: ...   → LLM 决定调用哪个工具")
+print("  Observation:  → 工具返回的结果")
+print("  Final Answer: → Agent 的最终回答")
+print()
+
+
+def run_demo(title: str, question: str) -> None:
+    """运行一轮 Agent 演示，打印标题和问题后调用 agent_executor"""
+    print("━" * 60)
+    print(f"【演示：{title}】")
+    print(f"❓ 问题：{question}")
+    print("━" * 60)
+    result = agent_executor.invoke({"input": question})
+    print()
+    print(f"✅ 最终答案：{result['output']}")
+    print()
+
+
+# ── 演示一：单工具调用（天气）────────────────────────────
+#
+# 期望 Agent 行为：
+#   Thought: 用户问天气，我需要用 get_weather 工具
+#   Action: get_weather
+#   Action Input: 北京
+#   Observation: 北京：晴，温度 28°C
+#   Final Answer: 北京今天天气晴，气温 28 摄氏度。
+
+run_demo("单工具调用（天气查询）", "北京今天天气怎么样？")
+
+# ── 演示二：单工具调用（计算）────────────────────────────
+#
+# 期望 Agent 行为：
+#   Thought: 用户要计算 2 的 10 次方，我需要用 calculate_power 工具
+#   Action: calculate_power
+#   Action Input: 2, 10  （或 JSON 格式，取决于 LLM）
+#   Observation: 2 的 10 次方 = 1024
+#   Final Answer: 2 的 10 次方是 1024。
+
+run_demo("单工具调用（幂次计算）", "2 的 10 次方是多少？")
+
+# ── 演示三：多步推理（工具链式调用）─────────────────────
+#
+# 这是最精彩的演示！Agent 需要：
+#   第一步：调用 get_weather("北京") → 获得温度 28
+#   第二步：用温度值 28 作为 base，调用 calculate_power(28, 2) → 784
+#   Final Answer: 温度是 28°C，28 的 2 次方是 784
+#
+# 这展示了 ReAct 的核心能力：
+#   上一步的 Observation 成为下一步的推理依据！
+
+run_demo(
+    "多步推理（链式工具调用）",
+    "北京今天的温度是多少度？如果把这个温度值作为底数、2 作为指数，结果是多少？",
+)
+
+print("=" * 60)
+print("🎉 项目三学习完毕！你已经掌握了 ReAct Agent 的核心机制。")
+print("   核心公式：LLM（大脑）+ Tools（工具箱）+ ReAct 循环 = Agent")
+print("=" * 60)
