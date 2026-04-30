@@ -95,6 +95,7 @@ print("第 0 章：初始化 LLM 和 Embeddings 客户端")
 print("=" * 60)
 
 # ── API 配置（和 langchain/chatbot.py 保持一致）──────────────
+# 教学用硬编码；生产环境请改用环境变量：os.environ["OPENAI_API_KEY"]
 API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
 BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
 CHAT_MODEL = "kivy-kimi-k2_5"
@@ -247,7 +248,8 @@ print()
 #
 # 参数说明：
 #   chunk_size    = 每块最多包含多少字符
-#                  500 字 ≈ 250 个中文汉字，适合中文文档
+#                  Python 的 len() 按 Unicode 字符数计算，
+#                  所以 500 = 最多 500 个中文汉字（不是 250！）
 #   chunk_overlap = 相邻两块重叠多少字符
 #                  设置重叠是为了防止一个完整句子被切断在两块边界，
 #                  导致检索时丢失上下文
@@ -272,6 +274,7 @@ print(f"  原始文档 {len(raw_document.page_content)} 字 → 切成 {len(chun
 print()
 
 # 打印第一块，让你看看每块大概长什么样
+# 文档足够长，切块数必然 > 0，可以安全取 chunks[0]；生产代码中应先检查 len(chunks) > 0
 print(f"【第 1 块样本（共 {len(chunks[0].page_content)} 字）】")
 print("-" * 60)
 print(chunks[0].page_content)
