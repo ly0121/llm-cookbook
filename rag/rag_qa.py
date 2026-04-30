@@ -126,8 +126,8 @@ embeddings = OpenAIEmbeddings(
     base_url=BASE_URL,
 )
 
-print(f"✅ LLM 初始化完成")
+print("✅ LLM 初始化完成")
 print(f"   聊天模型: {CHAT_MODEL}")
-print(f"✅ Embeddings 初始化完成")
+print("✅ Embeddings 初始化完成")
 print(f"   向量化模型: {EMBEDDING_MODEL}")
 print()
