@@ -414,6 +414,9 @@ while True:
     history = store.get(SESSION_ID)
     if history:
         msg_count = len(history.messages)
+        # message.type 可以是 "human"、"ai" 或 "system"
+        # 用列表推导式统计 human 消息数，比 // 2 更精确也更有教育意义
+        human_count = sum(1 for m in history.messages if m.type == "human")
         print(f"  💾 [记忆状态] 当前会话共存储 {msg_count} 条消息 "
-              f"（{msg_count // 2} 轮对话）")
+              f"（{human_count} 轮对话）")
         print()
