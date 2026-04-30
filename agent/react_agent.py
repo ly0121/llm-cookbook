@@ -71,13 +71,14 @@ ReAct = Reasoning（推理）+ Acting（行动）
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 # LangChain Agent 核心组件
-from langchain.agents import create_react_agent, AgentExecutor
+# create_structured_chat_agent：支持多参数工具，Action Input 以 JSON blob 传递
+from langchain.agents import create_structured_chat_agent, AgentExecutor
 
 # @tool 装饰器：把普通 Python 函数变成 Agent 可以调用的工具
 from langchain_core.tools import tool
 
-# Prompt 模板：ReAct Agent 需要特定格式的 PromptTemplate
-from langchain_core.prompts import PromptTemplate
+# Prompt 模板：Structured Chat Agent 使用 ChatPromptTemplate + MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # 聊天模型（和前几个项目完全一样）
 from langchain_openai import ChatOpenAI
@@ -165,32 +166,11 @@ def get_weather(city: str) -> str:
 # 演示"工具可以是任何 Python 函数"——查询、计算、文件操作……
 
 @tool
-def calculate_power(base_and_exponent: str) -> str:
+def calculate_power(base: int, exponent: int) -> str:
     """计算一个整数的幂次方（base 的 exponent 次方）。
-    输入格式：用逗号分隔底数和指数，例如 "2,10" 表示计算 2 的 10 次方，返回 "2 的 10 次方 = 1024"。
-    当用户需要精确的数学幂次计算时使用此工具。"""
-    import json
-    # 支持多种输入格式：JSON {"base":2,"exponent":10}、逗号分隔 "2,10"、空格分隔 "2 10"
-    text = base_and_exponent.strip()
-    if text.startswith("{"):
-        try:
-            data = json.loads(text)
-            base = int(data.get("base") or data.get("底数") or list(data.values())[0])
-            exponent = int(data.get("exponent") or data.get("指数") or list(data.values())[1])
-        except Exception:
-            return "参数格式错误，请使用格式：底数,指数（例如：2,10）"
-    elif "," in text:
-        parts = [p.strip() for p in text.split(",", 1)]
-        try:
-            base, exponent = int(parts[0]), int(parts[1])
-        except Exception:
-            return "参数格式错误，请使用格式：底数,指数（例如：2,10）"
-    else:
-        parts = text.split()
-        try:
-            base, exponent = int(parts[0]), int(parts[1])
-        except Exception:
-            return "参数格式错误，请使用格式：底数,指数（例如：2,10）"
+    例如：base=2, exponent=10 → 返回 "2 的 10 次方 = 1024"。
+    当用户需要精确的数学幂次计算时使用此工具。
+    注意：只接受整数输入。"""
     result = base ** exponent
     return f"{base} 的 {exponent} 次方 = {result}"
 
@@ -221,66 +201,86 @@ print("第 2 章：构建 ReAct Agent")
 print("=" * 60)
 print()
 
-# ── ReAct Prompt 模板 ─────────────────────────────────────
+# ── Structured Chat Agent Prompt 模板 ─────────────────────
 #
-# create_react_agent 需要一个包含四个占位符的 PromptTemplate：
+# create_structured_chat_agent 需要一个 ChatPromptTemplate，
+# 必须包含三个占位符：
 #
-#   {tools}            → 所有工具的名称 + description 拼接文本
+#   {tools}            → 所有工具的名称 + description + args 拼接文本
 #                        AgentExecutor 会自动填入，LLM 靠这个认识工具
 #   {tool_names}       → 工具名称列表（逗号分隔）
-#                        用于格式约束：告诉 LLM "Action 只能是这些名字之一"
-#   {input}            → 用户的实际问题
-#   {agent_scratchpad} → Agent 的历史推理记录（上一轮的 Thought/Action/Observation）
-#                        LLM 靠这个"记住"之前做了什么，避免重复调用工具
+#   {agent_scratchpad} → MessagesPlaceholder，存放历史推理消息
 #
-# ⚠️ 避坑指南：四个占位符缺一不可！
-#   如果 prompt 里漏掉任何一个，create_react_agent 会抛出 ValueError。
+# 与 create_react_agent 的关键区别：
+#   create_react_agent       使用 ReActSingleInputOutputParser，
+#                            Action Input 是纯文本字符串，只能传单参数。
+#   create_structured_chat_agent 使用 JSONAgentOutputParser，
+#                            Action Input 是 JSON 对象，天然支持多参数！
 #
-# 注意：这里使用 PromptTemplate（不是 ChatPromptTemplate）
-#   因为 ReAct 格式是纯文本协议，不区分 system/human 角色。
+# ⚠️ 注意：这里使用 ChatPromptTemplate（不是 PromptTemplate）
+#   因为 Structured Chat Agent 用消息角色（system/human）区分提示区域，
+#   agent_scratchpad 用 MessagesPlaceholder 存放 AIMessage/ToolMessage 列表。
 
-REACT_PROMPT_TEMPLATE = """你是一个严谨、有条理的 AI 助手。你可以使用以下工具来回答用户的问题：
+SYSTEM_PROMPT = """你是一个严谨、有条理的 AI 助手。你可以使用以下工具来回答用户的问题：
 
 {tools}
 
-回答问题时，请严格按照以下格式逐行输出（不要跳过任何步骤）：
+回答问题时，请严格按照以下格式逐行输出：
 
 Question: 你需要回答的问题
 Thought: 分析当前情况，决定下一步行动
-Action: 选择要使用的工具，必须是 [{tool_names}] 中的一个
-Action Input: 传给工具的参数（直接写值，多个参数用逗号分隔，例如：2,10）
-Observation: （工具返回的结果，由系统填入，你不需要编写这行）
-...（以上 Thought/Action/Action Input/Observation 可以重复多次）
+Action:
+```
+{{
+  "action": "工具名称（必须是 {tool_names} 中的一个）",
+  "action_input": 传给工具的参数（单参数直接写值，多参数写 JSON 对象）
+}}
+```
+Observation: （工具返回的结果，由系统填入）
+...（以上 Thought/Action/Observation 可以重复多次）
 Thought: 我现在已经有足够的信息来回答问题了
-Final Answer: 对用户原始问题的完整回答
+Action:
+```
+{{
+  "action": "Final Answer",
+  "action_input": "对用户原始问题的完整回答"
+}}
+```
 
-现在开始！
+现在开始！"""
 
-Question: {input}
-Thought:{agent_scratchpad}"""
+HUMAN_PROMPT = """{input}
 
-react_prompt = PromptTemplate.from_template(REACT_PROMPT_TEMPLATE)
+{agent_scratchpad}"""
 
-print("【ReAct Prompt 模板已定义】")
-print("   包含四个必填占位符：{tools} {tool_names} {input} {agent_scratchpad}")
+react_prompt = ChatPromptTemplate.from_messages([
+    ("system", SYSTEM_PROMPT),
+    ("human", HUMAN_PROMPT),
+])
+
+print("【Structured Chat Agent Prompt 模板已定义】")
+print("   system 模板含占位符：{tools} {tool_names}")
+print("   human 模板含占位符：{input} {agent_scratchpad}")
 print()
 
 # ── 创建 Agent ─────────────────────────────────────────────
 #
-# create_react_agent 把三个组件组装成一个"决策单元"（Agent）：
-#   llm    → 负责推理：读取 Thought，决定下一步 Action
+# create_structured_chat_agent 把三个组件组装成一个"决策单元"（Agent）：
+#   llm    → 负责推理：读取 Thought，决定下一步 Action（JSON blob 格式）
 #   tools  → 可调用的工具列表
-#   prompt → ReAct 格式的提示词模板
+#   prompt → Structured Chat 格式的提示词模板
 #
-# 返回的 agent 本身是一个 Runnable，不能直接 invoke——
-# 需要包在 AgentExecutor 里才能运行完整的 ReAct 循环。
+# 与 create_react_agent 的本质区别：
+#   输出解析器从 ReActSingleInputOutputParser（纯文本 Action Input）
+#   升级为 JSONAgentOutputParser（JSON blob Action Input）。
+#   这使得多参数工具（如 calculate_power）可以正确接收 {"base":2,"exponent":10}。
 
-agent = create_react_agent(llm, tools, react_prompt)
+agent = create_structured_chat_agent(llm, tools, react_prompt)
 
 # ── 创建 AgentExecutor ────────────────────────────────────
 #
 # AgentExecutor 是 Agent 的"运行引擎"，负责：
-#   ① 调用 agent 做推理，解析 Action 和 Action Input
+#   ① 调用 agent 做推理，解析 Action（JSON blob）和 action_input
 #   ② 找到对应的工具函数并执行
 #   ③ 把 Observation（工具返回值）传回给 agent 继续推理
 #   ④ 循环直到 agent 输出 Final Answer
@@ -291,7 +291,7 @@ agent = create_react_agent(llm, tools, react_prompt)
 #   max_iterations=5     → 最多循环 5 次，防止 Agent 陷入死循环
 #
 # ⚠️ 避坑指南：handle_parsing_errors=True 一定要加！
-#   LLM 偶尔会输出格式不标准的内容（比如 Action 前多了空格），
+#   LLM 偶尔会输出格式不标准的内容（比如 JSON 前多了空格），
 #   不加这个参数时会直接抛出 OutputParserException，导致程序崩溃。
 
 agent_executor = AgentExecutor(
@@ -306,7 +306,7 @@ print("✅ Agent 构建完成！")
 print("   agent_executor 已准备好，调用 agent_executor.invoke({'input': '...'}) 即可运行")
 print()
 print("💡 小结：三个组件的分工")
-print("   create_react_agent(llm, tools, prompt) → 决策单元（知道怎么想）")
+print("   create_structured_chat_agent(llm, tools, prompt) → 决策单元（知道怎么想）")
 print("   AgentExecutor(agent, tools, verbose=True) → 执行引擎（负责跑循环）")
 print()
 
