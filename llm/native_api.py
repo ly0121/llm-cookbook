@@ -284,9 +284,15 @@ full_response = ""  # 用来累积完整回复（如果你之后需要处理完�
 
 for chunk in stream:
     # 取出这个碎片的文字内容
-    # 注意：最后几个 chunk 的 delta.content 可能是 None（表示结束信号）
-    # 所以要用 or "" 来处理 None 的情况，避免 print(None) 出现
-    # 另外某些 API 实现的最后一个 chunk 可能 choices 为空列表，需跳过
+    # ── 防御：处理两种不同的"结束信号" ─────────────────────────
+    #
+    # 情况一（标准 OpenAI 协议）：最后一个有效 chunk 的 choices 非空，
+    #   但 delta.content = None，finish_reason = "stop"
+    #   → 用 "or ''" 处理 None，这行 delta_text 会是空字符串，无害
+    #
+    # 情况二（本 Gateway 特有）：Gateway 在标准结束后再发一个额外的
+    #   "哨兵 chunk"，它的 choices 是空列表 []
+    #   → 不做处理会触发 IndexError，所以先 skip
     if not chunk.choices:
         continue
     delta_text = chunk.choices[0].delta.content or ""
