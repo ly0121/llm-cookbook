@@ -96,14 +96,12 @@ print("=" * 60)
 #
 # 这里为了教学方便，直接写死，生产环境请务必用方式二或三！
 
-# 你的 API Key（从 agent.py 复用）
-API_KEY = "ak-infer-ZGV2ZWxvcC1kYXRhLWFuYWx5c2lzOnB0ZXB5cjpDMDAwMjEzOmppbnl1YW5odWlAbGl4aWFuZy5jb206aW5mZXI_ZjdkYWEwZmEtYzg4ZS00MmUxLWJmMzYtMjRiNWE3MzZiZGVi"
+API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
 
-# 理想内部 LLM 接口地址（OpenAI 兼容格式）
-BASE_URL = "https://lpai-llm.lixiang.com/inference/deepseek-ai/deepseek-v3/v1/"
+BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
 
 # 使用的模型名称
-MODEL_NAME = "deepseek-v3-0324"
+MODEL_NAME = "kivy-kimi-k2_5"
 
 # 初始化 ChatOpenAI 客户端
 # 关键点：LangChain 的 ChatOpenAI 类通过 base_url 参数支持任何 OpenAI 兼容接口
@@ -150,14 +148,16 @@ print("=" * 60)
 #   "system"  - 系统指令，设定 AI 的"人设"（用户看不到，但 AI 会遵守）
 #   "human"   - 用户说的话
 #   "ai"      - AI 说的话（用于少样本示例，few-shot）
-demo_prompt = ChatPromptTemplate.from_messages([
-    # system 消息：设定 AI 的角色和规则
-    # {topic} 是一个变量，花括号括起来的都是变量
-    ("system", "你是一位专业的{topic}领域专家，请用通俗易懂的语言回答问题。"),
-    # human 消息：用户的提问
-    # {question} 也是变量
-    ("human", "{question}"),
-])
+demo_prompt = ChatPromptTemplate.from_messages(
+    [
+        # system 消息：设定 AI 的角色和规则
+        # {topic} 是一个变量，花括号括起来的都是变量
+        ("system", "你是一位专业的{topic}领域专家，请用通俗易懂的语言回答问题。"),
+        # human 消息：用户的提问
+        # {question} 也是变量
+        ("human", "{question}"),
+    ]
+)
 
 # 打印模板的"原始样子"——让你看清楚模板的内部结构
 print("【模板原始结构】")
@@ -166,10 +166,9 @@ print()
 
 # 用 .invoke() 方法填充变量，生成真正的提示词
 # 这一步叫"模板渲染"，就像把合同模板填写成具体合同
-filled_prompt = demo_prompt.invoke({
-    "topic": "Python 编程",
-    "question": "什么是列表推导式？"
-})
+filled_prompt = demo_prompt.invoke(
+    {"topic": "Python 编程", "question": "什么是列表推导式？"}
+)
 
 # 打印填充后的提示词，让你看到 LLM 实际收到的内容
 print("【填充变量后的提示词（LLM 将收到这个）】")
@@ -217,10 +216,9 @@ print()
 
 # 调用链！只需要提供模板中需要的变量
 print("【正在调用链，请稍候...】")
-result = simple_chain.invoke({
-    "topic": "Python 编程",
-    "question": "用一句话解释什么是列表推导式？"
-})
+result = simple_chain.invoke(
+    {"topic": "Python 编程", "question": "用一句话解释什么是列表推导式？"}
+)
 
 print(f"【链的最终输出（字符串）】")
 print(f"  {result}")
@@ -240,10 +238,9 @@ print("=" * 60)
 chain_without_parser = demo_prompt | llm
 
 print("【不带 OutputParser 的原始输出】")
-raw_output = chain_without_parser.invoke({
-    "topic": "Python 编程",
-    "question": "Python 中的 None 是什么？请用10字以内回答。"
-})
+raw_output = chain_without_parser.invoke(
+    {"topic": "Python 编程", "question": "Python 中的 None 是什么？请用10字以内回答。"}
+)
 # 打印原始 AIMessage 对象的类型和全部信息
 print(f"  类型: {type(raw_output)}")
 print(f"  内容: {raw_output}")
@@ -253,10 +250,9 @@ print()
 chain_with_parser = demo_prompt | llm | parser
 
 print("【带 StrOutputParser 的解析后输出】")
-parsed_output = chain_with_parser.invoke({
-    "topic": "Python 编程",
-    "question": "Python 中的 None 是什么？请用10字以内回答。"
-})
+parsed_output = chain_with_parser.invoke(
+    {"topic": "Python 编程", "question": "Python 中的 None 是什么？请用10字以内回答。"}
+)
 # 现在拿到的是干净的字符串
 print(f"  类型: {type(parsed_output)}")
 print(f"  内容: {parsed_output}")
@@ -326,18 +322,21 @@ def get_session_history(session_id: str) -> BaseChatMessageHistory:
 # 它会在提示词里留一个"洞"，专门用来塞入历史消息列表
 # variable_name="history" 表示：这个洞的名字叫 "history"
 # RunnableWithMessageHistory 在调用时会自动把历史消息填进这个洞
-chat_prompt = ChatPromptTemplate.from_messages([
-    # 系统角色设定
-    ("system", "你是一个友善的 AI 助手，请用中文回答问题。保持回答简洁（100字以内）。"),
-
-    # ⚠️ 避坑指南：MessagesPlaceholder 的位置很重要！
-    # 它必须放在 system 消息之后、最新的 human 消息之前。
-    # 这样 LLM 才能先看到角色设定，再看历史，最后看最新问题。
-    MessagesPlaceholder(variable_name="history"),
-
-    # 最新的用户输入
-    ("human", "{input}"),
-])
+chat_prompt = ChatPromptTemplate.from_messages(
+    [
+        # 系统角色设定
+        (
+            "system",
+            "你是一个友善的 AI 助手，请用中文回答问题。保持回答简洁（100字以内）。",
+        ),
+        # ⚠️ 避坑指南：MessagesPlaceholder 的位置很重要！
+        # 它必须放在 system 消息之后、最新的 human 消息之前。
+        # 这样 LLM 才能先看到角色设定，再看历史，最后看最新问题。
+        MessagesPlaceholder(variable_name="history"),
+        # 最新的用户输入
+        ("human", "{input}"),
+    ]
+)
 
 # ─── 构建基础链（不含记忆）───────────────────────────────
 
@@ -417,6 +416,8 @@ while True:
         # message.type 可以是 "human"、"ai" 或 "system"
         # 用列表推导式统计 human 消息数，比 // 2 更精确也更有教育意义
         human_count = sum(1 for m in history.messages if m.type == "human")
-        print(f"  💾 [记忆状态] 当前会话共存储 {msg_count} 条消息 "
-              f"（{human_count} 轮对话）")
+        print(
+            f"  💾 [记忆状态] 当前会话共存储 {msg_count} 条消息 "
+            f"（{human_count} 轮对话）"
+        )
         print()
