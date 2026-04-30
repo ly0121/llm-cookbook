@@ -178,3 +178,88 @@ for message in filled_prompt.messages:
     # message.content 是消息内容
     print(f"  [{message.type.upper()}] {message.content}")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 2 章：LCEL 管道（ | 语法）
+# 目标：理解"链式调用"的核心思想
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 2 章：LCEL 管道演示")
+print("=" * 60)
+
+# 创建输出解析器实例
+# StrOutputParser 的作用：把 LLM 返回的 AIMessage 对象 → 纯字符串
+# 为什么需要它？
+#   LLM 返回的是：AIMessage(content="你好", response_metadata={...}, id="...")
+#   我们想要的是：纯字符串 "你好"
+parser = StrOutputParser()
+
+# ⚠️ 避坑指南：LCEL 管道的 | 运算符
+#
+# 这里的 | 不是"或"运算符（Python 原生的位运算）！
+# LangChain 重载了 | 运算符，让它变成了"管道"语义。
+# 每个 LangChain 组件都继承自 Runnable 接口，Runnable 实现了 __or__ 方法。
+#
+# 数据流向：
+#   demo_prompt  →  llm  →  parser
+#      ↓              ↓        ↓
+#   生成消息列表   调用AI   提取纯文本
+
+# 用 | 把三个组件串联成一条"链"
+# 这一行就是 LCEL 的精华！
+simple_chain = demo_prompt | llm | parser
+
+print("【LCEL 链已创建】")
+print(f"  链的结构：demo_prompt | llm | parser")
+print(f"  链的类型：{type(simple_chain).__name__}")
+print()
+
+# 调用链！只需要提供模板中需要的变量
+print("【正在调用链，请稍候...】")
+result = simple_chain.invoke({
+    "topic": "Python 编程",
+    "question": "用一句话解释什么是列表推导式？"
+})
+
+print(f"【链的最终输出（字符串）】")
+print(f"  {result}")
+print()
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 3 章：OutputParser 的作用对比
+# 目标：亲眼看到"解析前"和"解析后"的区别
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 3 章：OutputParser 对比演示")
+print("=" * 60)
+
+# 创建一条"不带 parser"的链，直接拿 LLM 的原始输出
+chain_without_parser = demo_prompt | llm
+
+print("【不带 OutputParser 的原始输出】")
+raw_output = chain_without_parser.invoke({
+    "topic": "Python 编程",
+    "question": "Python 中的 None 是什么？请用10字以内回答。"
+})
+# 打印原始 AIMessage 对象的类型和全部信息
+print(f"  类型: {type(raw_output)}")
+print(f"  内容: {raw_output}")
+print()
+
+# 创建一条"带 parser"的链
+chain_with_parser = demo_prompt | llm | parser
+
+print("【带 StrOutputParser 的解析后输出】")
+parsed_output = chain_with_parser.invoke({
+    "topic": "Python 编程",
+    "question": "Python 中的 None 是什么？请用10字以内回答。"
+})
+# 现在拿到的是干净的字符串
+print(f"  类型: {type(parsed_output)}")
+print(f"  内容: {parsed_output}")
+print()
+print("💡 结论：StrOutputParser 把 AIMessage 对象剥开，只留下 .content 文本")
+print()
