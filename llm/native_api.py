@@ -214,3 +214,105 @@ print()
 print("💡 小结：LangChain 的 StrOutputParser 做的事，等价于：")
 print("   response.choices[0].message.content")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 2 章：流式打字机效果（Streaming）
+# 目标：实现 ChatGPT 那种"一个字一个字蹦出来"的效果
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 2 章：流式打字机效果（Streaming）")
+print("=" * 60)
+print()
+print("【阻塞式 vs 流式的原理区别】")
+print("""
+  阻塞式（stream=False，第1章）：
+    你 → 发请求 → 等待 → 等待 → 等待 → 收到完整回复
+    体验：等一段时间，然后文字"一下子全出来"
+
+  流式（stream=True，本章）：
+    你 → 发请求 → 立刻开始收到碎片 → 碎片 → 碎片 → 结束
+    体验：文字像打字机一样"一个字一个字蹦出来"
+
+  流式的好处：
+    ① 用户体验更好，感觉更"实时"
+    ② 不用等 AI 全部生成完才看到内容
+    ③ 可以在 AI 还在"说话"时就开始处理前面的内容
+""")
+
+# ── 构造 messages（和第1章结构一模一样，内容不同） ─────────
+
+messages_stream = [
+    {
+        "role": "system",
+        "content": "你是一位有趣的科普作家，擅长用生动的比喻解释自然现象，回答在100字左右。",
+    },
+    {
+        "role": "user",
+        "content": "为什么天空是蓝色的？",
+    },
+]
+
+# ── 发起流式 API 调用 ─────────────────────────────────────
+#
+# 和第1章的代码对比，唯一的区别就是加了：stream=True
+# 加了这个参数后，API 不等 AI 说完，而是每生成一点就立刻发一个"碎片"给你
+
+print("【流式打字机效果（注意：下面的字会一个个蹦出来）】")
+print("AI：", end="", flush=True)  # 先打印"AI："前缀，不换行
+
+stream = client.chat.completions.create(
+    model=MODEL_NAME,
+    messages=messages_stream,
+    temperature=0.7,
+    max_tokens=300,
+    stream=True,  # 🔑 关键参数！开启流式输出
+)
+
+# ── 用 for 循环接收每一个碎片（chunk）────────────────────
+#
+# stream 是一个迭代器，每次循环拿到一个"碎片"（chunk）
+# 每个碎片里只有一小段文字（可能是一个字、几个字，甚至是标点）
+#
+# chunk 的结构和第1章的 response 类似，但有一个关键区别：
+#   第1章：response.choices[0].message.content  ← 完整文本
+#   本章：   chunk.choices[0].delta.content      ← 文字碎片
+#
+# "delta"（增量）：每个 chunk 只包含这一小步新增的内容，不是全文
+
+full_response = ""  # 用来累积完整回复（如果你之后需要处理完整文本）
+
+for chunk in stream:
+    # 取出这个碎片的文字内容
+    # 注意：最后几个 chunk 的 delta.content 可能是 None（表示结束信号）
+    # 所以要用 or "" 来处理 None 的情况，避免 print(None) 出现
+    # 另外某些 API 实现的最后一个 chunk 可能 choices 为空列表，需跳过
+    if not chunk.choices:
+        continue
+    delta_text = chunk.choices[0].delta.content or ""
+
+    # 打字机效果的魔法：
+    #   end=""    → 不在每个碎片后面换行（默认 print 会换行）
+    #   flush=True → 立刻把缓冲区里的内容冲到屏幕，不等攒满再显示
+    #               （如果没有 flush=True，字符可能会一次性全跳出来，打字机效果失败！）
+    print(delta_text, end="", flush=True)
+
+    full_response += delta_text  # 累积完整回复
+
+# 所有碎片接收完毕后，打印一个换行（因为上面所有 print 都没有换行）
+print()
+print()
+
+# ── 展示累积的完整回复 ────────────────────────────────────
+print(f"【流式接收完毕！完整回复共 {len(full_response)} 个字符】")
+print()
+
+print("💡 小结：流式 vs 阻塞式，代码差异只有两处：")
+print("   1. create(..., stream=True)")
+print("   2. for chunk in stream:  →  chunk.choices[0].delta.content")
+print("      （delta = 增量碎片，而非 message = 完整文本）")
+print()
+print("=" * 60)
+print("🎉 项目零学习完毕！你已经掌握了 LLM 最底层的调用方式。")
+print("   下一站：langchain/chatbot.py —— 看看 LangChain 帮你封装了什么。")
+print("=" * 60)
