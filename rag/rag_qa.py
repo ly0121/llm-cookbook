@@ -322,3 +322,64 @@ print("   每个文本块 → 一个 float 列表（例如 1536 维）")
 print("   含义相近的文本 → 向量在高维空间里距离更近")
 print("   检索时：把问题也变成向量，找距离最近的 k 个文本块")
 print()
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 第 3 章：检索演示（不问 LLM，只看检索结果）
+# 目标：亲眼看到"向量数据库检索到了哪些文本块"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+print("=" * 60)
+print("第 3 章：检索演示（直接查看召回的原始文本块）")
+print("=" * 60)
+print()
+
+# ── 创建检索器 ────────────────────────────────────────────
+#
+# as_retriever() 把向量数据库包装成一个"检索器"对象
+# search_kwargs={"k": 3} 表示：每次检索返回最相似的 3 个文本块
+#
+# 检索原理：
+#   用户提问 → 向量化为 query_vector
+#   在 FAISS 索引中找出与 query_vector 最近的 k 个向量
+#   返回这 k 个向量对应的文本块
+
+retriever = vectorstore.as_retriever(
+    search_kwargs={"k": 3}  # 每次检索召回 3 个最相关的文本块
+)
+
+
+def show_retrieval_results(query: str) -> list:
+    """执行检索并打印召回的文本块，返回结果列表"""
+    print(f"🔍 检索问题：「{query}」")
+    print()
+
+    # retriever.invoke() 返回一个 Document 列表（k 个）
+    docs = retriever.invoke(query)
+
+    print(f"   检索到 {len(docs)} 个相关文本块：")
+    print()
+
+    for i, doc in enumerate(docs, 1):
+        print(f"  ┌── 召回块 #{i}（{len(doc.page_content)} 字）──")
+        # 打印完整文本块内容，缩进对齐
+        lines = doc.page_content.split("\n")
+        for line in lines:
+            print(f"  │  {line}")
+        print(f"  └── 元数据: {doc.metadata}")
+        print()
+
+    return docs
+
+
+# ── 演示1：关于图灵测试 ─────────────────────────────────────
+print("【演示：不同问题检索到不同的文本块】")
+print("-" * 60)
+show_retrieval_results("艾伦·图灵和图灵测试是什么？")
+
+print("-" * 60)
+# ── 演示2：关于深度学习 ─────────────────────────────────────
+show_retrieval_results("深度学习是什么时候兴起的？")
+
+print("💡 小结：RAG 的检索步骤就是这些。")
+print("   大模型看到的'参考资料'，就是这几个文本块！")
+print()
