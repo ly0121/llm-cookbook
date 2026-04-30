@@ -61,8 +61,11 @@ RAG 的四步工作流：
 # 【导入区】
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# LangChain OpenAI 集成：同时提供聊天模型和向量化模型
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+# LangChain OpenAI 集成：提供聊天模型
+from langchain_openai import ChatOpenAI
+
+# 本地向量化模型（不需要 API Key，模型文件自动下载到本地缓存）
+from langchain_huggingface import HuggingFaceEmbeddings
 
 # 输出解析器：把 AIMessage 对象转成纯字符串
 from langchain_core.output_parsers import StrOutputParser
@@ -100,14 +103,11 @@ API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdT
 BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
 CHAT_MODEL = "kivy-kimi-k2_5"
 
-# ⚠️ 避坑指南：Embedding 模型名
-#
-# 不同 Gateway 支持的 Embedding 模型名不同，常见的有：
-#   "text-embedding-3-small"  → OpenAI 新版，性能更好（推荐）
-#   "text-embedding-ada-002"  → OpenAI 旧版，更多 Gateway 支持
-#
-# 如果运行时报 404 或 422 错误，说明这个模型名不对，换另一个试试！
-EMBEDDING_MODEL = "text-embedding-3-small"
+# 本地 Embedding 模型（HuggingFace Sentence Transformers）
+# 首次运行时自动从 HuggingFace Hub 下载模型文件（约 100MB），之后从本地缓存加载
+# 推荐中文模型：BAAI/bge-small-zh-v1.5（专为中文优化，小巧快速）
+# 如需更高精度：BAAI/bge-base-zh-v1.5（更大，效果更好）
+EMBEDDING_MODEL = "BAAI/bge-small-zh-v1.5"
 
 # 初始化聊天 LLM（和项目一完全一样）
 # temperature=0.0：RAG 场景用 0，要精确回答，不要创意发散
@@ -118,13 +118,11 @@ llm = ChatOpenAI(
     temperature=0.0,
 )
 
-# 初始化 Embeddings 客户端
-# OpenAIEmbeddings 和 ChatOpenAI 一样，支持 base_url 指向任意兼容接口
-# 它的作用：把文本字符串 → 数字向量（一个 float 列表）
-embeddings = OpenAIEmbeddings(
-    model=EMBEDDING_MODEL,
-    api_key=API_KEY,
-    base_url=BASE_URL,
+# 初始化本地 Embeddings 客户端
+# HuggingFaceEmbeddings 在本机 CPU/GPU 上运行，不调用任何外部 API
+# 它的作用：把文本字符串 → 数字向量（一个 float 列表），和 OpenAIEmbeddings 接口完全一样
+embeddings = HuggingFaceEmbeddings(
+    model_name=EMBEDDING_MODEL,
 )
 
 print("✅ LLM 初始化完成")
