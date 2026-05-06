@@ -5,3 +5,4 @@ openai>=1.0.0
 faiss-cpu>=1.7.4
 langchain-huggingface>=0.1.0
 sentence-transformers>=2.2.0
+langgraph>=0.6.0
