@@ -12,6 +12,16 @@
   --vp-c-brand-soft: rgba(129, 140, 248, 0.14);
 }
 
+/* Hero 标题不换行 */
+.VPHero .text {
+  white-space: nowrap !important;
+  font-size: 40px !important;
+}
+
+.VPHero .tagline {
+  white-space: nowrap !important;
+}
+
 /* Python Runner 组件样式 */
 .python-runner {
   border: 1px solid var(--vp-c-divider);

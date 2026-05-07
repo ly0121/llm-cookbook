@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "LLM Cookbook"
-  text: "大模型应用开发完全手册"
-  tagline: 从原理到实战，系统掌握 LLM / Agent / RAG 全技术栈
+  text: "大模型应用开发手册"
+  tagline: 从原理到实战，掌握 LLM / Agent / RAG 全栈
   actions:
     - theme: brand
       text: 开始学习
