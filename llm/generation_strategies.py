@@ -117,7 +117,10 @@ for temp in TEMPERATURES:
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
-                {"role": "system", "content": "你是一位诗意的文学家，回答控制在20字以内。"},
+                {
+                    "role": "system",
+                    "content": "你是一位诗意的文学家，回答控制在20字以内。",
+                },
                 {"role": "user", "content": TEMP_PROMPT},
             ],
             temperature=temp,

@@ -148,10 +148,15 @@ print()
 #   对于 prompt | llm（没有 parser）：
 #     每个 chunk 是一个 AIMessageChunk 对象
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一位简洁的科普作家，用生动的比喻解释概念。回答控制在100字以内。"),
-    ("human", "{question}"),
-])
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "你是一位简洁的科普作家，用生动的比喻解释概念。回答控制在100字以内。",
+        ),
+        ("human", "{question}"),
+    ]
+)
 
 parser = StrOutputParser()
 chain = prompt | llm | parser
@@ -264,11 +269,13 @@ def calculate(expression: str) -> str:
 
 agent_tools = [get_population, calculate]
 
-agent_prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一个数据分析助手，可以查询城市人口并进行计算。回答简洁。"),
-    MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ("human", "{input}"),
-])
+agent_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "你是一个数据分析助手，可以查询城市人口并进行计算。回答简洁。"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ("human", "{input}"),
+    ]
+)
 
 agent = create_tool_calling_agent(llm, agent_tools, agent_prompt)
 agent_executor = AgentExecutor(
@@ -469,6 +476,7 @@ print()
 
 class MiniState(TypedDict):
     """简化的状态，用于演示 LangGraph 流式"""
+
     topic: str
     summary: str
     expanded: str
@@ -503,16 +511,20 @@ print("  ❓ 主题：人工智能")
 print("  📡 每个节点执行后的完整 State：")
 print()
 
-for i, state_snapshot in enumerate(app.stream(
-    {"topic": "人工智能", "summary": "", "expanded": ""},
-    stream_mode="values",
-)):
+for i, state_snapshot in enumerate(
+    app.stream(
+        {"topic": "人工智能", "summary": "", "expanded": ""},
+        stream_mode="values",
+    )
+):
     print(f"  ┌── 快照 #{i} ──────────────────────────────────────")
     print(f"  │ topic:    {state_snapshot.get('topic', '')!r}")
-    summary = state_snapshot.get('summary', '')
+    summary = state_snapshot.get("summary", "")
     print(f"  │ summary:  {summary[:50] + '...' if len(summary) > 50 else summary!r}")
-    expanded = state_snapshot.get('expanded', '')
-    print(f"  │ expanded: {expanded[:50] + '...' if len(expanded) > 50 else expanded!r}")
+    expanded = state_snapshot.get("expanded", "")
+    print(
+        f"  │ expanded: {expanded[:50] + '...' if len(expanded) > 50 else expanded!r}"
+    )
     print(f"  └──────────────────────────────────────────────────")
     print()
 

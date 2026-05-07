@@ -188,21 +188,21 @@ class StudioState(TypedDict):
     """自媒体工作室的状态数据包——在所有节点之间流转"""
 
     # ── 输入字段 ──
-    topic: str          # 用户给定的创作主题（全程不变）
+    topic: str  # 用户给定的创作主题（全程不变）
 
     # ── 研究员产出 ──
-    outline: str        # 研究员生成的大纲和素材
+    outline: str  # 研究员生成的大纲和素材
 
     # ── 写手产出 ──
-    draft: str          # 写手的文章初稿（可能被多次覆盖）
+    draft: str  # 写手的文章初稿（可能被多次覆盖）
 
     # ── 主编产出 ──
-    feedback: str       # 主编的审核意见（不合格时有具体修改建议）
-    is_approved: bool   # 主编是否批准（True=合格，False=打回）
+    feedback: str  # 主编的审核意见（不合格时有具体修改建议）
+    is_approved: bool  # 主编是否批准（True=合格，False=打回）
 
     # ── 流程控制 ──
-    revision: int       # 当前是第几轮修改（从 0 开始，用于防止无限循环）
-    final: str          # 最终定稿的文章（只有通过审核后才有值）
+    revision: int  # 当前是第几轮修改（从 0 开始，用于防止无限循环）
+    final: str  # 最终定稿的文章（只有通过审核后才有值）
 
 
 print("【StudioState 字段定义】")
@@ -247,6 +247,7 @@ parser = StrOutputParser()
 # 节点一：研究员（Researcher）
 # ═══════════════════════════════════════════════════════════
 
+
 def researcher_node(state: StudioState) -> dict:
     """
     研究员节点：根据主题生成大纲和素材。
@@ -261,8 +262,11 @@ def researcher_node(state: StudioState) -> dict:
     print(f"  📥 收到的任务主题：「{state['topic']}」")
 
     # 构造研究员专属的 Prompt
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """你是一位资深的自媒体内容研究员。
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """你是一位资深的自媒体内容研究员。
 你的任务是为给定主题生成文章大纲和关键素材。
 
 请输出：
@@ -270,9 +274,11 @@ def researcher_node(state: StudioState) -> dict:
 2. 每个大纲点对应的 2-3 个关键素材/论据/数据
 
 注意：大纲要有逻辑递进关系，素材要具体、有说服力。
-请直接输出大纲内容，不要加多余的客套话。"""),
-        ("human", "请为以下主题生成文章大纲和素材：{topic}"),
-    ])
+请直接输出大纲内容，不要加多余的客套话。""",
+            ),
+            ("human", "请为以下主题生成文章大纲和素材：{topic}"),
+        ]
+    )
 
     # 用 LCEL 链调用 LLM
     chain = prompt | llm | parser
@@ -294,6 +300,7 @@ def researcher_node(state: StudioState) -> dict:
 # 节点二：写手（Writer）
 # ═══════════════════════════════════════════════════════════
 
+
 def writer_node(state: StudioState) -> dict:
     """
     写手节点：根据大纲素材写出文章初稿。
@@ -310,7 +317,9 @@ def writer_node(state: StudioState) -> dict:
     if current_revision == 0:
         print("│  ✍️  【写手】正在创作初稿...                                │")
     else:
-        print(f"│  ✍️  【写手】正在第 {current_revision + 1} 次修改...                           │")
+        print(
+            f"│  ✍️  【写手】正在第 {current_revision + 1} 次修改...                           │"
+        )
     print("└" + "─" * 58 + "┘")
     print(f"  📥 主题：「{state['topic']}」")
     print(f"  📥 大纲长度：{len(state.get('outline', ''))} 字")
@@ -320,8 +329,11 @@ def writer_node(state: StudioState) -> dict:
     # 根据是否有反馈，构造不同的 Prompt
     if feedback:
         # 重写模式：参考之前的稿子和主编反馈
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """你是一位才华横溢的自媒体写手。
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """你是一位才华横溢的自媒体写手。
 你之前写的文章被主编打回了，现在需要根据反馈修改。
 
 要求：
@@ -330,8 +342,11 @@ def writer_node(state: StudioState) -> dict:
 3. 逻辑清晰，层层递进
 4. 必须认真参考主编的修改意见进行改进
 
-请直接输出修改后的文章正文，不要加标题前缀。"""),
-            ("human", """原始主题：{topic}
+请直接输出修改后的文章正文，不要加标题前缀。""",
+                ),
+                (
+                    "human",
+                    """原始主题：{topic}
 
 大纲素材：
 {outline}
@@ -342,18 +357,25 @@ def writer_node(state: StudioState) -> dict:
 主编的修改意见：
 {feedback}
 
-请根据以上反馈，重新写一篇改进后的文章："""),
-        ])
-        draft = (prompt | llm | parser).invoke({
-            "topic": state["topic"],
-            "outline": state["outline"],
-            "draft": state.get("draft", ""),
-            "feedback": feedback,
-        })
+请根据以上反馈，重新写一篇改进后的文章：""",
+                ),
+            ]
+        )
+        draft = (prompt | llm | parser).invoke(
+            {
+                "topic": state["topic"],
+                "outline": state["outline"],
+                "draft": state.get("draft", ""),
+                "feedback": feedback,
+            }
+        )
     else:
         # 首次创作模式
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """你是一位才华横溢的自媒体写手。
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """你是一位才华横溢的自媒体写手。
 根据研究员提供的大纲和素材，写出一篇引人入胜的短文。
 
 要求：
@@ -362,18 +384,25 @@ def writer_node(state: StudioState) -> dict:
 3. 逻辑清晰，层层递进
 4. 开头要有吸引力（hook），结尾要有力量
 
-请直接输出文章正文，不要加标题前缀。"""),
-            ("human", """主题：{topic}
+请直接输出文章正文，不要加标题前缀。""",
+                ),
+                (
+                    "human",
+                    """主题：{topic}
 
 大纲素材：
 {outline}
 
-请根据以上素材，写出一篇生动有趣的短文："""),
-        ])
-        draft = (prompt | llm | parser).invoke({
-            "topic": state["topic"],
-            "outline": state["outline"],
-        })
+请根据以上素材，写出一篇生动有趣的短文：""",
+                ),
+            ]
+        )
+        draft = (prompt | llm | parser).invoke(
+            {
+                "topic": state["topic"],
+                "outline": state["outline"],
+            }
+        )
 
     print(f"  📤 写手产出的文章（{len(draft)} 字）：")
     print(f"  {'─' * 50}")
@@ -392,6 +421,7 @@ def writer_node(state: StudioState) -> dict:
 # ═══════════════════════════════════════════════════════════
 # 节点三：主编/审核（Editor）
 # ═══════════════════════════════════════════════════════════
+
 
 def editor_node(state: StudioState) -> dict:
     """
@@ -434,8 +464,11 @@ def editor_node(state: StudioState) -> dict:
     #   prompt 必须要求它先给出明确结论（PASS/FAIL），再给原因。
     #   否则 LLM 可能写一大堆分析但不给出明确结论。
 
-    review_prompt = ChatPromptTemplate.from_messages([
-        ("system", """你是一位严格的自媒体主编。请审核以下文章的质量。
+    review_prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """你是一位严格的自媒体主编。请审核以下文章的质量。
 
 审核标准：
 1. 内容是否有趣、生动（有比喻或故事）
@@ -445,9 +478,11 @@ def editor_node(state: StudioState) -> dict:
 请严格按以下格式回复（必须第一行就是结论）：
 结论：PASS 或 FAIL
 原因：一句话说明理由
-修改建议：如果 FAIL，给出具体修改建议；如果 PASS，写"无"。"""),
-        ("human", "请审核以下文章：\n\n{draft}"),
-    ])
+修改建议：如果 FAIL，给出具体修改建议；如果 PASS，写"无"。""",
+            ),
+            ("human", "请审核以下文章：\n\n{draft}"),
+        ]
+    )
 
     review_result = (review_prompt | llm | parser).invoke({"draft": draft})
 
@@ -531,7 +566,9 @@ def should_continue(state: StudioState) -> str:
         print("  🔀 路由决策：审核通过 → 流程结束（END）")
         return END
     else:
-        print(f"  🔀 路由决策：审核不通过 → 打回给写手（第 {state.get('revision', 0) + 1} 次修改）")
+        print(
+            f"  🔀 路由决策：审核不通过 → 打回给写手（第 {state.get('revision', 0) + 1} 次修改）"
+        )
         return "writer"
 
 
@@ -580,8 +617,8 @@ print("  ✅ 添加节点：researcher, writer, editor")
 # 特殊节点 START：图的入口点。
 # 用 add_edge(START, "researcher") 表示"图开始时先执行 researcher"。
 
-workflow.add_edge(START, "researcher")       # 入口 → 研究员
-workflow.add_edge("researcher", "writer")    # 研究员 → 写手
+workflow.add_edge(START, "researcher")  # 入口 → 研究员
+workflow.add_edge("researcher", "writer")  # 研究员 → 写手
 
 print("  ✅ 添加普通边：START → researcher → writer")
 
@@ -598,8 +635,8 @@ print("  ✅ 添加普通边：START → researcher → writer")
 # LangGraph 会自动找到对应的节点。
 
 workflow.add_conditional_edges(
-    "editor",           # 条件边的起点：主编节点之后
-    should_continue,    # 路由函数：决定去 END 还是 writer
+    "editor",  # 条件边的起点：主编节点之后
+    should_continue,  # 路由函数：决定去 END 还是 writer
 )
 
 print("  ✅ 添加条件边：editor → [END 或 writer]（由 should_continue 决定）")
@@ -670,15 +707,17 @@ print("━" * 60)
 #   ⑥ 如果打回 writer，循环继续……
 #   ⑦ 到达 END 时，返回最终的完整 State
 
-final_state = app.invoke({
-    "topic": TOPIC,
-    "revision": 0,      # 初始修改轮次为 0
-    "is_approved": False,
-    "feedback": "",
-    "outline": "",
-    "draft": "",
-    "final": "",
-})
+final_state = app.invoke(
+    {
+        "topic": TOPIC,
+        "revision": 0,  # 初始修改轮次为 0
+        "is_approved": False,
+        "feedback": "",
+        "outline": "",
+        "draft": "",
+        "final": "",
+    }
+)
 
 # ── 打印最终结果 ──────────────────────────────────────────
 

@@ -114,7 +114,9 @@ llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperatu
 
 # 评估用的 LLM（同一个模型，但作为"评委"角色）
 # 生产环境中建议用更强的模型当评委（如 GPT-4 评估 GPT-3.5 的输出）
-eval_llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.0)
+eval_llm = ChatOpenAI(
+    model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.0
+)
 
 # Embedding 模型
 embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-small-zh-v1.5")
@@ -152,14 +154,19 @@ vectorstore = FAISS.from_documents(RAG_DOCUMENTS, embeddings)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
 # RAG 链
-rag_prompt = ChatPromptTemplate.from_messages([
-    ("system", """根据以下参考资料回答问题。只使用参考资料中的信息，不要编造。
+rag_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """根据以下参考资料回答问题。只使用参考资料中的信息，不要编造。
 如果资料中没有相关信息，说"根据现有资料无法回答"。
 
 参考资料：
-{context}"""),
-    ("human", "{question}"),
-])
+{context}""",
+        ),
+        ("human", "{question}"),
+    ]
+)
 
 parser = StrOutputParser()
 
@@ -267,14 +274,18 @@ print()
 
 class EvalScore(BaseModel):
     """单个评估指标的结果"""
+
     score: int = Field(description="评分，1-5分（1=最差，5=最好）")
     reasoning: str = Field(description="评分理由，一句话解释为什么给这个分数")
 
 
 # ── 指标一：检索相关性 ───────────────────────────────────
 
-RELEVANCE_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """你是一位严格的检索质量评估专家。
+RELEVANCE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一位严格的检索质量评估专家。
 请评估：给定用户的问题，检索到的文档块是否相关。
 
 评分标准（1-5分）：
@@ -282,20 +293,28 @@ RELEVANCE_PROMPT = ChatPromptTemplate.from_messages([
 4分：检索到的文档大部分相关，包含关键信息
 3分：检索到的文档部分相关，但缺少一些关键信息
 2分：检索到的文档与问题关系不大
-1分：检索到的文档完全不相关"""),
-    ("human", """用户问题：{question}
+1分：检索到的文档完全不相关""",
+        ),
+        (
+            "human",
+            """用户问题：{question}
 
 检索到的文档内容：
 {contexts}
 
-请评分："""),
-])
+请评分：""",
+        ),
+    ]
+)
 
 
 # ── 指标二：忠实度（Faithfulness）────────────────────────
 
-FAITHFULNESS_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """你是一位严格的事实核查专家。
+FAITHFULNESS_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一位严格的事实核查专家。
 请评估：AI的回答是否忠实于提供的参考资料？是否有编造/幻觉？
 
 评分标准（1-5分）：
@@ -303,21 +322,29 @@ FAITHFULNESS_PROMPT = ChatPromptTemplate.from_messages([
 4分：回答基本忠实，有极少量推断但合理
 3分：回答部分忠实，有一些无法验证的内容
 2分：回答有明显的编造内容，但也有正确部分
-1分：回答大量编造，严重偏离参考资料"""),
-    ("human", """参考资料：
+1分：回答大量编造，严重偏离参考资料""",
+        ),
+        (
+            "human",
+            """参考资料：
 {contexts}
 
 AI的回答：
 {answer}
 
-请评估回答的忠实度："""),
-])
+请评估回答的忠实度：""",
+        ),
+    ]
+)
 
 
 # ── 指标三：答案正确性 ───────────────────────────────────
 
-CORRECTNESS_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """你是一位严格的答案质量评估专家。
+CORRECTNESS_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一位严格的答案质量评估专家。
 请评估：AI的回答与标准答案相比，正确性如何？
 
 评分标准（1-5分）：
@@ -327,13 +354,18 @@ CORRECTNESS_PROMPT = ChatPromptTemplate.from_messages([
 2分：有错误信息，或关键信息严重遗漏
 1分：完全错误或答非所问
 
-注意：表述方式不同但含义相同应视为正确（如"28.3亿"和"约28亿"）。"""),
-    ("human", """问题：{question}
+注意：表述方式不同但含义相同应视为正确（如"28.3亿"和"约28亿"）。""",
+        ),
+        (
+            "human",
+            """问题：{question}
 标准答案：{ground_truth}
 AI的回答：{answer}
 
-请评分："""),
-])
+请评分：""",
+        ),
+    ]
+)
 
 
 # ── 构建评估链（结构化输出）────────────────────────────────
@@ -344,29 +376,35 @@ eval_structured = eval_llm.with_structured_output(EvalScore)
 def evaluate_relevance(question: str, contexts: list[str]) -> EvalScore:
     """评估检索相关性"""
     chain = RELEVANCE_PROMPT | eval_structured
-    return chain.invoke({
-        "question": question,
-        "contexts": "\n\n".join(contexts),
-    })
+    return chain.invoke(
+        {
+            "question": question,
+            "contexts": "\n\n".join(contexts),
+        }
+    )
 
 
 def evaluate_faithfulness(contexts: list[str], answer: str) -> EvalScore:
     """评估忠实度"""
     chain = FAITHFULNESS_PROMPT | eval_structured
-    return chain.invoke({
-        "contexts": "\n\n".join(contexts),
-        "answer": answer,
-    })
+    return chain.invoke(
+        {
+            "contexts": "\n\n".join(contexts),
+            "answer": answer,
+        }
+    )
 
 
 def evaluate_correctness(question: str, ground_truth: str, answer: str) -> EvalScore:
     """评估答案正确性"""
     chain = CORRECTNESS_PROMPT | eval_structured
-    return chain.invoke({
-        "question": question,
-        "ground_truth": ground_truth,
-        "answer": answer,
-    })
+    return chain.invoke(
+        {
+            "question": question,
+            "ground_truth": ground_truth,
+            "answer": answer,
+        }
+    )
 
 
 print("  ✅ 三大评估指标定义完成：")
@@ -426,7 +464,9 @@ for i, item in enumerate(EVAL_DATASET, 1):
     }
     eval_results.append(result)
 
-    print(f"  📊 评分：相关性={relevance.score}/5  忠实度={faithfulness.score}/5  正确性={correctness.score}/5")
+    print(
+        f"  📊 评分：相关性={relevance.score}/5  忠实度={faithfulness.score}/5  正确性={correctness.score}/5"
+    )
     print()
 
 print("  ✅ 全部评估完成！")
@@ -466,10 +506,12 @@ print("╠═══════════════════════�
 print("║                    综合评分                              ║")
 print("╠══════════════════════════════════════════════════════════╣")
 
+
 # 用 ASCII 柱状图可视化
 def bar(score, max_score=5, width=20):
     filled = int(score / max_score * width)
     return "█" * filled + "░" * (width - filled)
+
 
 print(f"║  检索相关性  {bar(avg_relevance)}  {avg_relevance:.2f}/5")
 print(f"║  忠实度      {bar(avg_faithfulness)}  {avg_faithfulness:.2f}/5")
@@ -494,9 +536,12 @@ print("║                    评分理由摘要                          ║")
 print("╠══════════════════════════════════════════════════════════╣")
 
 # 找出得分最低的案例，展示评分理由
-lowest = min(eval_results, key=lambda x: (
-    x["relevance"]["score"] + x["faithfulness"]["score"] + x["correctness"]["score"]
-))
+lowest = min(
+    eval_results,
+    key=lambda x: (
+        x["relevance"]["score"] + x["faithfulness"]["score"] + x["correctness"]["score"]
+    ),
+)
 print(f"║  📉 最低分案例：{lowest['question'][:40]}")
 print(f"║     相关性理由：{lowest['relevance']['reason'][:45]}")
 print(f"║     忠实度理由：{lowest['faithfulness']['reason'][:45]}")
@@ -551,7 +596,11 @@ def run_rag_b(question: str) -> dict:
     context = "\n\n".join(doc.page_content for doc in docs)
     chain = rag_prompt | llm | parser
     answer = chain.invoke({"context": context, "question": question})
-    return {"question": question, "contexts": [doc.page_content for doc in docs], "answer": answer}
+    return {
+        "question": question,
+        "contexts": [doc.page_content for doc in docs],
+        "answer": answer,
+    }
 
 
 print("  ⏳ 对比实验：配置A (k=2) vs 配置B (k=3)")
@@ -571,11 +620,13 @@ for item in EVAL_DATASET[:3]:
     result_b = run_rag_b(q)
     correctness_b = evaluate_correctness(q, gt, result_b["answer"])
 
-    ab_results.append({
-        "question": q[:30],
-        "score_a": correctness_a.score,
-        "score_b": correctness_b.score,
-    })
+    ab_results.append(
+        {
+            "question": q[:30],
+            "score_a": correctness_a.score,
+            "score_b": correctness_b.score,
+        }
+    )
 
 print("  【A/B 对比结果（答案正确性维度）】")
 print("  ┌────────────────────────────────┬────────┬────────┬────────┐")
@@ -587,7 +638,9 @@ for r in ab_results:
     diff = r["score_b"] - r["score_a"]
     diff_str = f"+{diff}" if diff > 0 else str(diff)
     arrow = "↑" if diff > 0 else "↓" if diff < 0 else "="
-    print(f"  │ {r['question']:30s} │   {r['score_a']}    │   {r['score_b']}    │  {diff_str} {arrow}  │")
+    print(
+        f"  │ {r['question']:30s} │   {r['score_a']}    │   {r['score_b']}    │  {diff_str} {arrow}  │"
+    )
     total_a += r["score_a"]
     total_b += r["score_b"]
 
@@ -596,14 +649,18 @@ avg_b = total_b / len(ab_results)
 diff_avg = avg_b - avg_a
 print("  ├────────────────────────────────┼────────┼────────┼────────┤")
 diff_str = f"+{diff_avg:.1f}" if diff_avg > 0 else f"{diff_avg:.1f}"
-print(f"  │ 平均                            │  {avg_a:.1f}   │  {avg_b:.1f}   │ {diff_str:>5s}  │")
+print(
+    f"  │ 平均                            │  {avg_a:.1f}   │  {avg_b:.1f}   │ {diff_str:>5s}  │"
+)
 print("  └────────────────────────────────┴────────┴────────┴────────┘")
 print()
 
 if diff_avg > 0:
     print(f"  📈 结论：配置B (k=3) 比配置A (k=2) 平均高 {diff_avg:.1f} 分，建议采用。")
 elif diff_avg < 0:
-    print(f"  📉 结论：配置B (k=3) 比配置A (k=2) 平均低 {abs(diff_avg):.1f} 分，不建议切换。")
+    print(
+        f"  📉 结论：配置B (k=3) 比配置A (k=2) 平均低 {abs(diff_avg):.1f} 分，不建议切换。"
+    )
 else:
     print("  📊 结论：两种配置效果相当，保持现状即可。")
 print()

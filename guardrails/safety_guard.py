@@ -241,10 +241,12 @@ HARDENED_SYSTEM_PROMPT = """你是智驾科技的 AI 客服助手。
 - 超出业务范围的问题回复"抱歉，这超出了我的服务范围"
 """
 
-hardened_prompt = ChatPromptTemplate.from_messages([
-    ("system", HARDENED_SYSTEM_PROMPT),
-    ("human", "{question}"),
-])
+hardened_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", HARDENED_SYSTEM_PROMPT),
+        ("human", "{question}"),
+    ]
+)
 
 hardened_chain = hardened_prompt | llm | StrOutputParser()
 

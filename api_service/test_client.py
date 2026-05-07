@@ -105,10 +105,12 @@ def test_langserve_batch():
     print("=" * 60)
     resp = requests.post(
         f"{BASE_URL}/langserve/qa/batch",
-        json={"inputs": [
-            {"question": "什么是 GPU？"},
-            {"question": "什么是 CPU？"},
-        ]},
+        json={
+            "inputs": [
+                {"question": "什么是 GPU？"},
+                {"question": "什么是 CPU？"},
+            ]
+        },
     )
     print(f"  状态码: {resp.status_code}")
     data = resp.json()

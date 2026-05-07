@@ -88,10 +88,12 @@ MODEL_NAME = "kivy-kimi-k2_5"
 
 llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.7)
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一位简洁的科普作家，回答控制在50字以内。"),
-    ("human", "{question}"),
-])
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "你是一位简洁的科普作家，回答控制在50字以内。"),
+        ("human", "{question}"),
+    ]
+)
 parser = StrOutputParser()
 chain = prompt | llm | parser
 
@@ -161,10 +163,7 @@ async def main():
 
     # asyncio.gather 接收多个协程，同时运行它们
     # 类比：同时下 5 个外卖单，等最慢那个到就全齐了
-    tasks = [
-        chain.ainvoke({"question": q})
-        for q in QUESTIONS
-    ]
+    tasks = [chain.ainvoke({"question": q}) for q in QUESTIONS]
     async_results = await asyncio.gather(*tasks)
 
     async_total = time.time() - start
@@ -355,15 +354,19 @@ async def main():
     ]
 
     start = time.time()
-    results = await asyncio.gather(*[
-        safe_invoke(q, timeout_sec=30.0) for q in questions
-    ])
+    results = await asyncio.gather(
+        *[safe_invoke(q, timeout_sec=30.0) for q in questions]
+    )
     elapsed = time.time() - start
 
     success_count = 0
     for r in results:
         status_icon = "✅" if r["status"] == "success" else "❌"
-        answer_display = r["answer"][:30] + "..." if r["answer"] and len(r["answer"]) > 30 else r["answer"]
+        answer_display = (
+            r["answer"][:30] + "..."
+            if r["answer"] and len(r["answer"]) > 30
+            else r["answer"]
+        )
         print(f"  {status_icon} [{r['status']:7s}] {r['question']} → {answer_display}")
         if r["status"] == "success":
             success_count += 1
@@ -425,9 +428,9 @@ async def main():
     print()
 
     start = time.time()
-    await asyncio.gather(*[
-        rate_limited_invoke(q, i) for i, q in enumerate(sem_questions, 1)
-    ])
+    await asyncio.gather(
+        *[rate_limited_invoke(q, i) for i, q in enumerate(sem_questions, 1)]
+    )
     total = time.time() - start
 
     print()

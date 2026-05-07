@@ -150,6 +150,7 @@ WEATHER_DATA = {
 #   @tool 依赖类型注解（city: str）生成 args_schema，
 #   缺少类型注解时 LLM 不知道应该传什么类型的参数。
 
+
 @tool
 def get_weather(city: str) -> str:
     """查询指定城市的实时天气信息，返回天气状况和温度（摄氏度）。
@@ -172,6 +173,7 @@ def get_weather(city: str) -> str:
 #   这是 ReAct 框架的设计取舍：可读性强（人类能看懂 Thought/Action），
 #   但不支持结构化多参数输入（需要用 create_tool_calling_agent 才能原生支持）。
 
+
 @tool
 def calculate_power(base_and_exponent: str) -> str:
     """计算幂次方。输入格式：底数,指数（用逗号分隔），例如 2,10 表示 2 的 10 次方。
@@ -181,7 +183,7 @@ def calculate_power(base_and_exponent: str) -> str:
         parts = [p.strip() for p in base_and_exponent.split(",")]
         base = int(parts[0])
         exponent = int(parts[1])
-        result = base ** exponent
+        result = base**exponent
         return f"{base} 的 {exponent} 次方 = {result}"
     except (ValueError, IndexError):
         return "参数格式错误，请使用逗号分隔的整数，例如：2,10"
@@ -293,13 +295,15 @@ agent = create_react_agent(llm, tools, react_prompt)
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
-    verbose=True,               # 打印完整 ReAct 循环（Thought/Action/Observation）
-    handle_parsing_errors=True, # 格式错误时自我纠正，而不是崩溃
-    max_iterations=5,           # 最多循环 5 次，防止死循环
+    verbose=True,  # 打印完整 ReAct 循环（Thought/Action/Observation）
+    handle_parsing_errors=True,  # 格式错误时自我纠正，而不是崩溃
+    max_iterations=5,  # 最多循环 5 次，防止死循环
 )
 
 print("✅ Agent 构建完成！")
-print("   agent_executor 已准备好，调用 agent_executor.invoke({'input': '...'}) 即可运行")
+print(
+    "   agent_executor 已准备好，调用 agent_executor.invoke({'input': '...'}) 即可运行"
+)
 print()
 print("💡 小结：三个组件的分工")
 print("   create_react_agent(llm, tools, prompt) → 决策单元（知道怎么想）")

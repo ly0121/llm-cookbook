@@ -120,30 +120,32 @@ print()
 docs_initial = [
     Document(
         page_content="智驾科技成立于2020年，专注于自动驾驶感知算法研发，"
-                     "总部位于北京，员工规模500人。",
+        "总部位于北京，员工规模500人。",
         metadata={"id": "doc_001", "category": "公司简介", "year": 2020},
     ),
     Document(
         page_content="智驾科技的核心产品是视觉感知系统VisionCore，"
-                     "已搭载于国内多家主流汽车品牌，累计行驶里程超过10亿公里。",
+        "已搭载于国内多家主流汽车品牌，累计行驶里程超过10亿公里。",
         metadata={"id": "doc_002", "category": "产品介绍", "year": 2023},
     ),
     Document(
         page_content="智驾科技2023年完成B轮融资，融资金额5亿元人民币，"
-                     "投资方包括红杉资本和多家汽车主机厂战略投资。",
+        "投资方包括红杉资本和多家汽车主机厂战略投资。",
         metadata={"id": "doc_003", "category": "融资信息", "year": 2023},
     ),
     Document(
         page_content="智驾科技技术团队由前百度、华为自动驾驶部门核心成员组成，"
-                     "拥有发明专利200余项，覆盖感知、规划、控制全栈。",
+        "拥有发明专利200余项，覆盖感知、规划、控制全栈。",
         metadata={"id": "doc_004", "category": "团队介绍", "year": 2022},
     ),
 ]
 
 print("【测试文档准备完毕】")
 for doc in docs_initial:
-    print(f"  [{doc.metadata['id']}] {doc.metadata['category']}: "
-          f"{doc.page_content[:30]}...")
+    print(
+        f"  [{doc.metadata['id']}] {doc.metadata['category']}: "
+        f"{doc.page_content[:30]}..."
+    )
 print()
 
 # 持久化目录配置
@@ -205,7 +207,7 @@ print("【演示：向 FAISS 库追加新文档】")
 
 new_doc_faiss = Document(
     page_content="智驾科技于2024年推出第二代感知芯片DriveChip X2，"
-                 "算力达到200TOPS，支持8路摄像头并行处理。",
+    "算力达到200TOPS，支持8路摄像头并行处理。",
     metadata={"id": "doc_005", "category": "产品介绍", "year": 2024},
 )
 
@@ -330,7 +332,7 @@ print("【操作 1：新增文档】")
 new_docs = [
     Document(
         page_content="智驾科技与多家城市签署智慧交通合作协议，"
-                     "计划在2025年实现10座城市的智能网联覆盖。",
+        "计划在2025年实现10座城市的智能网联覆盖。",
         metadata={"id": "doc_006", "category": "战略合作", "year": 2024},
     ),
 ]
@@ -367,7 +369,7 @@ print("更新 doc_001（公司简介）的内容...")
 # 有些版本的 Chroma 支持 update() 方法，但 upsert 模式更通用
 updated_doc = Document(
     page_content="智驾科技成立于2020年，专注于自动驾驶感知算法研发，"
-                 "总部位于北京，员工规模已扩展至800人，在上海、深圳设有研发中心。",
+    "总部位于北京，员工规模已扩展至800人，在上海、深圳设有研发中心。",
     metadata={"id": "doc_001", "category": "公司简介", "year": 2024},
 )
 
@@ -427,8 +429,10 @@ product_results = chroma_db.similarity_search(
 print(f"查询：'技术参数'（仅限产品介绍类别）")
 print(f"结果数量：{len(product_results)}")
 for i, doc in enumerate(product_results, 1):
-    print(f"  {i}. [{doc.metadata.get('id')}] [{doc.metadata.get('category')}] "
-          f"{doc.page_content[:45]}...")
+    print(
+        f"  {i}. [{doc.metadata.get('id')}] [{doc.metadata.get('category')}] "
+        f"{doc.page_content[:45]}..."
+    )
 print()
 
 # ─── 过滤示例 2：按 year 范围过滤 ─────────────────────────
@@ -446,8 +450,10 @@ recent_results = chroma_db.similarity_search(
 print(f"查询：'最新进展'（仅限 2023 年及以后）")
 print(f"结果数量：{len(recent_results)}")
 for i, doc in enumerate(recent_results, 1):
-    print(f"  {i}. [{doc.metadata.get('id')}] [year={doc.metadata.get('year')}] "
-          f"{doc.page_content[:45]}...")
+    print(
+        f"  {i}. [{doc.metadata.get('id')}] [year={doc.metadata.get('year')}] "
+        f"{doc.page_content[:45]}..."
+    )
 print()
 
 # ─── 过滤示例 3：组合过滤（AND 条件）─────────────────────
@@ -509,8 +515,10 @@ print("FAISS 重新加载成功！")
 
 # 验证 FAISS 数据完整性
 faiss_verify = faiss_reloaded.similarity_search("融资", k=1)
-print(f"  检索验证：查询'融资' → [{faiss_verify[0].metadata.get('id')}] "
-      f"{faiss_verify[0].page_content[:40]}...")
+print(
+    f"  检索验证：查询'融资' → [{faiss_verify[0].metadata.get('id')}] "
+    f"{faiss_verify[0].page_content[:40]}..."
+)
 print()
 
 # 重新加载 Chroma
@@ -535,8 +543,10 @@ print(f"  更新验证（doc_001）：{chroma_verify[0].page_content[:50]}...")
 # 验证 doc_004 确实被删除了
 doc_004_check = chroma_reloaded.similarity_search("百度华为自动驾驶团队", k=1)
 print(f"  删除验证（查询团队信息，doc_004 应已删除）：")
-print(f"    最相似文档：[{doc_004_check[0].metadata.get('id')}] "
-      f"{doc_004_check[0].page_content[:40]}...")
+print(
+    f"    最相似文档：[{doc_004_check[0].metadata.get('id')}] "
+    f"{doc_004_check[0].page_content[:40]}..."
+)
 print()
 
 print("持久化验证完成！所有操作（增删改）均已正确写入磁盘。")

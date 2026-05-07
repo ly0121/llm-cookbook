@@ -165,7 +165,9 @@ class ObservabilityHandler(BaseCallbackHandler):
         total_tokens = token_usage.get("total_tokens", "?")
 
         print(f"    📡 [on_llm_end] 生成完毕")
-        print(f"       延迟: {elapsed*1000:.0f}ms | Token: {prompt_tokens}+{completion_tokens}={total_tokens}")
+        print(
+            f"       延迟: {elapsed * 1000:.0f}ms | Token: {prompt_tokens}+{completion_tokens}={total_tokens}"
+        )
 
     def on_llm_error(self, error: Exception, *, run_id: UUID, **kwargs):
         """LLM 出错时触发"""
@@ -181,13 +183,15 @@ class ObservabilityHandler(BaseCallbackHandler):
     def on_chain_start(self, serialized: dict, inputs: dict, *, run_id: UUID, **kwargs):
         """链开始执行时触发"""
         self._start_times[run_id] = time.time()
-        chain_name = (serialized or {}).get("name", (serialized or {}).get("id", ["unknown"])[-1])
+        chain_name = (serialized or {}).get(
+            "name", (serialized or {}).get("id", ["unknown"])[-1]
+        )
         print(f"    📡 [on_chain_start] 链开始: {chain_name}")
 
     def on_chain_end(self, outputs: dict, *, run_id: UUID, **kwargs):
         """链执行完毕时触发"""
         elapsed = time.time() - self._start_times.get(run_id, time.time())
-        print(f"    📡 [on_chain_end] 链完毕: {elapsed*1000:.0f}ms")
+        print(f"    📡 [on_chain_end] 链完毕: {elapsed * 1000:.0f}ms")
 
     def get_summary(self) -> dict:
         """生成可观测性摘要"""
@@ -209,10 +213,12 @@ class ObservabilityHandler(BaseCallbackHandler):
 
 handler = ObservabilityHandler()
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一位简洁的科普作家，回答控制在50字以内。"),
-    ("human", "{question}"),
-])
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "你是一位简洁的科普作家，回答控制在50字以内。"),
+        ("human", "{question}"),
+    ]
+)
 chain = prompt | llm | StrOutputParser()
 
 print("【带 Callback 追踪的 LLM 调用】")
@@ -392,7 +398,9 @@ class CostTracker(BaseCallbackHandler):
         print(f"  │  调用次数    ：{self.call_count}")
         print(f"  │  输入 Token  ：{self.total_input_tokens:,}")
         print(f"  │  输出 Token  ：{self.total_output_tokens:,}")
-        print(f"  │  总 Token    ：{self.total_input_tokens + self.total_output_tokens:,}")
+        print(
+            f"  │  总 Token    ：{self.total_input_tokens + self.total_output_tokens:,}"
+        )
         print(f"  │  预估费用    ：¥{self.total_cost:.4f}")
         print("  └──────────────────────────────────────────┘")
 

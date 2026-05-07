@@ -118,17 +118,24 @@ llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperatu
 # ── 构建两条 Chain（模拟不同的 AI 能力接口）──────────────
 
 # Chain 1：通用问答
-qa_prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一个简洁的 AI 助手，回答控制在 100 字以内。"),
-    ("human", "{question}"),
-])
+qa_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "你是一个简洁的 AI 助手，回答控制在 100 字以内。"),
+        ("human", "{question}"),
+    ]
+)
 qa_chain = qa_prompt | llm | StrOutputParser()
 
 # Chain 2：翻译
-translate_prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一个翻译专家。将用户输入的文本翻译为{target_language}。只输出翻译结果，不要额外解释。"),
-    ("human", "{text}"),
-])
+translate_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "你是一个翻译专家。将用户输入的文本翻译为{target_language}。只输出翻译结果，不要额外解释。",
+        ),
+        ("human", "{text}"),
+    ]
+)
 translate_chain = translate_prompt | llm | StrOutputParser()
 
 
@@ -171,11 +178,13 @@ app = FastAPI(
 
 class QuestionRequest(BaseModel):
     """问答接口的请求体"""
+
     question: str = Field(description="用户的问题", examples=["什么是量子计算？"])
 
 
 class QuestionResponse(BaseModel):
     """问答接口的响应体"""
+
     question: str = Field(description="原始问题")
     answer: str = Field(description="AI 的回答")
     model: str = Field(description="使用的模型名称")
@@ -183,6 +192,7 @@ class QuestionResponse(BaseModel):
 
 class TranslateRequest(BaseModel):
     """翻译接口的请求体"""
+
     text: str = Field(description="要翻译的文本", examples=["Hello, world!"])
     target_language: str = Field(
         default="中文",
@@ -193,6 +203,7 @@ class TranslateRequest(BaseModel):
 
 class TranslateResponse(BaseModel):
     """翻译接口的响应体"""
+
     original: str = Field(description="原始文本")
     translated: str = Field(description="翻译结果")
     target_language: str = Field(description="目标语言")
@@ -207,6 +218,7 @@ class TranslateResponse(BaseModel):
 # 函数参数 request: QuestionRequest：
 #   FastAPI 看到参数类型是 Pydantic 模型，就知道从请求 Body 中解析 JSON。
 #   如果客户端发的 JSON 格式不对，FastAPI 自动返回 422 错误。
+
 
 @app.post("/api/qa", response_model=QuestionResponse, tags=["手动实现"])
 async def qa_endpoint(request: QuestionRequest):
@@ -229,6 +241,7 @@ async def qa_endpoint(request: QuestionRequest):
 
 # ── 端点二：翻译（POST /api/translate）────────────────────
 
+
 @app.post("/api/translate", response_model=TranslateResponse, tags=["手动实现"])
 async def translate_endpoint(request: TranslateRequest):
     """
@@ -237,10 +250,12 @@ async def translate_endpoint(request: TranslateRequest):
     接收文本和目标语言，返回翻译结果。
     """
     try:
-        translated = await translate_chain.ainvoke({
-            "text": request.text,
-            "target_language": request.target_language,
-        })
+        translated = await translate_chain.ainvoke(
+            {
+                "text": request.text,
+                "target_language": request.target_language,
+            }
+        )
         return TranslateResponse(
             original=request.text,
             translated=translated,
@@ -259,6 +274,7 @@ async def translate_endpoint(request: TranslateRequest):
 #   普通接口：用户等 5 秒才看到结果（体验差）
 #   流式接口：0.3 秒开始逐字显示（体验好）
 
+
 @app.post("/api/qa/stream", tags=["手动实现"])
 async def qa_stream_endpoint(request: QuestionRequest):
     """
@@ -266,6 +282,7 @@ async def qa_stream_endpoint(request: QuestionRequest):
 
     返回 Server-Sent Events 流，前端可逐 token 接收。
     """
+
     async def generate_sse():
         """异步生成器：逐 token 产出 SSE 事件"""
         try:
@@ -337,6 +354,7 @@ add_routes(
 #   如果返回非 200，自动重启容器或摘除流量。
 #
 # 这是生产部署的"必备标配"接口。
+
 
 @app.get("/health", tags=["运维"])
 async def health_check():
@@ -424,7 +442,7 @@ if __name__ == "__main__":
     print("  └──────────────────────────────────────────────────┘")
     print()
     print("  💡 测试命令：")
-    print('     curl -X POST http://localhost:8000/api/qa \\')
+    print("     curl -X POST http://localhost:8000/api/qa \\")
     print('       -H "Content-Type: application/json" \\')
     print('       -d \'{"question": "什么是量子计算？"}\'')
     print()

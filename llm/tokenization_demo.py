@@ -65,7 +65,9 @@ text_demo = "机器学习很有趣"
 print(f"  原始文本：{text_demo}")
 print(f"  按字切分：['机', '器', '学', '习', '很', '有', '趣']  → 7 个 token")
 print(f"  按词切分：['机器学习', '很', '有趣']                   → 3 个 token")
-print(f"  BPE 切分：['机器', '学习', '很有', '趣']               → 4 个 token（实际结果）")
+print(
+    f"  BPE 切分：['机器', '学习', '很有', '趣']               → 4 个 token（实际结果）"
+)
 print()
 print("  BPE 的切法是通过大量文本训练出来的，不需要词典，")
 print("  它根据字符对出现的频率自动学习合并规则。")
@@ -92,6 +94,7 @@ print()
 
 print("【迷你 BPE 训练过程】")
 print()
+
 
 def train_bpe(text, num_merges=5):
     """
@@ -123,7 +126,11 @@ def train_bpe(text, num_merges=5):
         merged = []
         i = 0
         while i < len(tokens):
-            if i < len(tokens) - 1 and tokens[i] == best_pair[0] and tokens[i + 1] == best_pair[1]:
+            if (
+                i < len(tokens) - 1
+                and tokens[i] == best_pair[0]
+                and tokens[i + 1] == best_pair[1]
+            ):
                 merged.append(new_token)
                 i += 2
             else:
@@ -131,11 +138,14 @@ def train_bpe(text, num_merges=5):
                 i += 1
         tokens = merged
 
-        print(f"  第{step + 1}轮合并: {best_pair[0]!r} + {best_pair[1]!r} → {new_token!r}  (出现{best_count}次)")
+        print(
+            f"  第{step + 1}轮合并: {best_pair[0]!r} + {best_pair[1]!r} → {new_token!r}  (出现{best_count}次)"
+        )
         print(f"  合并后: {tokens}")
         print()
 
     return tokens
+
 
 # 用一个简单的英文示例演示 BPE
 sample_text = "low lower lowest low lower"
@@ -238,6 +248,7 @@ print()
 #
 # 这个函数模拟 OpenAI 官方的 token 计数逻辑
 
+
 def count_message_tokens(messages, model="gpt-4"):
     """
     计算一个 messages 数组的总 token 数（包含结构开销）。
@@ -247,7 +258,7 @@ def count_message_tokens(messages, model="gpt-4"):
 
     # 每条消息的固定开销
     tokens_per_message = 4  # <|im_start|>{role}\n{content}<|im_end|>\n
-    tokens_per_name = -1    # 如果有 name 字段，role 会被省略
+    tokens_per_name = -1  # 如果有 name 字段，role 会被省略
 
     total = 0
     for message in messages:
@@ -269,9 +280,12 @@ messages_short = [
 ]
 
 messages_long = [
-    {"role": "system", "content": "你是一个资深的 Python 编程专家，拥有20年开发经验。"
-     "你的回答要包含代码示例、最佳实践、常见陷阱和性能优化建议。"
-     "回答使用中文，代码注释也用中文。格式要清晰，使用 markdown。"},
+    {
+        "role": "system",
+        "content": "你是一个资深的 Python 编程专家，拥有20年开发经验。"
+        "你的回答要包含代码示例、最佳实践、常见陷阱和性能优化建议。"
+        "回答使用中文，代码注释也用中文。格式要清晰，使用 markdown。",
+    },
     {"role": "user", "content": "什么是Python？"},
 ]
 
@@ -289,13 +303,14 @@ print()
 #   输入: $0.03 / 1K tokens
 #   输出: $0.06 / 1K tokens
 
+
 def estimate_cost(input_tokens, output_tokens, model="gpt-4"):
     """
     估算单次 API 调用成本（美元）。
     价格基于 2024 年 GPT-4 标准定价。
     """
     pricing = {
-        "gpt-4": {"input": 0.03, "output": 0.06},        # $ per 1K tokens
+        "gpt-4": {"input": 0.03, "output": 0.06},  # $ per 1K tokens
         "gpt-4o": {"input": 0.005, "output": 0.015},
         "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
     }
@@ -350,6 +365,7 @@ print()
 print("【上下文窗口管理策略】")
 print()
 
+
 def manage_conversation(messages, max_tokens=4096, reserved_for_output=500):
     """
     管理对话历史，确保不超出 token 限制。
@@ -398,14 +414,23 @@ long_conversation = [
 ]
 # 模拟 20 轮对话
 for i in range(1, 21):
-    long_conversation.append({"role": "user", "content": f"这是第{i}个问题，请详细解释一下相关概念和背景知识。"})
-    long_conversation.append({"role": "assistant", "content": f"好的，关于第{i}个问题，让我详细解释..." * 5})
+    long_conversation.append(
+        {
+            "role": "user",
+            "content": f"这是第{i}个问题，请详细解释一下相关概念和背景知识。",
+        }
+    )
+    long_conversation.append(
+        {"role": "assistant", "content": f"好的，关于第{i}个问题，让我详细解释..." * 5}
+    )
 
 total_tokens = count_message_tokens(long_conversation)
 print(f"  原始对话: {len(long_conversation)} 条消息, 约 {total_tokens} tokens")
 
 # 使用一个很小的窗口来演示裁剪效果
-managed, trimmed = manage_conversation(long_conversation, max_tokens=2000, reserved_for_output=500)
+managed, trimmed = manage_conversation(
+    long_conversation, max_tokens=2000, reserved_for_output=500
+)
 managed_tokens = count_message_tokens(managed)
 print(f"  管理后:   {len(managed)} 条消息, 约 {managed_tokens} tokens")
 print(f"  裁剪了:   {trimmed} 条消息")
@@ -458,8 +483,12 @@ print(f"  {'-' * 8}-+{'-' * 8}+{'-' * 8}+{'-' * 7}+{'-' * 30}")
 for label, text in test_texts:
     n_cl100k = len(enc_cl100k.encode(text))
     n_o200k = len(enc_o200k.encode(text))
-    saving = f"{((n_cl100k - n_o200k) / n_cl100k * 100):.0f}%" if n_cl100k > n_o200k else "-"
-    print(f"  {label:<8s} | {n_cl100k:>6d} | {n_o200k:>6d} | {saving:>5s} | {text[:28]}")
+    saving = (
+        f"{((n_cl100k - n_o200k) / n_cl100k * 100):.0f}%" if n_cl100k > n_o200k else "-"
+    )
+    print(
+        f"  {label:<8s} | {n_cl100k:>6d} | {n_o200k:>6d} | {saving:>5s} | {text[:28]}"
+    )
 
 print()
 print("  结论：o200k_base（GPT-4o）对中文的 tokenization 效率明显更高，")

@@ -88,7 +88,9 @@ BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
 MODEL_NAME = "kivy-kimi-k2_5"
 
 llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.7)
-summary_llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.0)
+summary_llm = ChatOpenAI(
+    model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.0
+)
 embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-small-zh-v1.5")
 
 print("✅ LLM + Embeddings 初始化完成")
@@ -129,7 +131,7 @@ class WindowMemory:
 
     def get_messages(self) -> list:
         """返回最近 K 轮的消息（K轮 = 2K条消息）"""
-        return self.messages[-(self.k * 2):]
+        return self.messages[-(self.k * 2) :]
 
     @property
     def size(self) -> int:
@@ -140,11 +142,13 @@ class WindowMemory:
 
 window_mem = WindowMemory(k=2)  # 只记最近 2 轮
 
-window_prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一个友好的助手，回答简洁（30字以内）。"),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{question}"),
-])
+window_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "你是一个友好的助手，回答简洁（30字以内）。"),
+        MessagesPlaceholder(variable_name="history"),
+        ("human", "{question}"),
+    ]
+)
 
 window_chain = window_prompt | llm | StrOutputParser()
 
@@ -199,15 +203,20 @@ print()
 # 类比：你不记得昨天每一句话，但记得"昨天和小明讨论了项目进度，
 #       他说下周能交付"。这就是"摘要"。
 
-SUMMARIZE_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """请将以下对话历史压缩成一段简洁的摘要。
+SUMMARIZE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """请将以下对话历史压缩成一段简洁的摘要。
 要求：
 1. 保留关键事实（人名、数字、偏好、重要决定）
 2. 去除寒暄和重复
 3. 用第三人称描述
-4. 控制在100字以内"""),
-    ("human", "对话历史：\n{conversation}\n\n请生成摘要："),
-])
+4. 控制在100字以内""",
+        ),
+        ("human", "对话历史：\n{conversation}\n\n请生成摘要："),
+    ]
+)
 
 summarize_chain = SUMMARIZE_PROMPT | summary_llm | StrOutputParser()
 
@@ -257,13 +266,18 @@ class SummaryMemory:
 
 summary_mem = SummaryMemory(k=2)
 
-summary_prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是一个友好的助手，回答简洁（30字以内）。
+summary_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一个友好的助手，回答简洁（30字以内）。
 
-{summary_context}"""),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{question}"),
-])
+{summary_context}""",
+        ),
+        MessagesPlaceholder(variable_name="history"),
+        ("human", "{question}"),
+    ]
+)
 
 summary_chain_full = summary_prompt | llm | StrOutputParser()
 
@@ -282,11 +296,13 @@ for i, question in enumerate(CONVERSATIONS_2, 1):
     summary, history = summary_mem.get_context()
     summary_context = f"[历史摘要] {summary}" if summary else ""
 
-    answer = summary_chain_full.invoke({
-        "question": question,
-        "history": history,
-        "summary_context": summary_context,
-    })
+    answer = summary_chain_full.invoke(
+        {
+            "question": question,
+            "history": history,
+            "summary_context": summary_context,
+        }
+    )
 
     summary_mem.add_user_message(question)
     summary_mem.add_ai_message(answer)
@@ -381,8 +397,8 @@ print()
 # 测试：用新问题"激活"相关记忆
 TEST_QUERIES = [
     "推荐一家好吃的餐厅",  # 应该回忆起"喜欢四川火锅"
-    "我的宠物怎么样了",    # 应该回忆起"猫叫小橘"
-    "有什么技术值得学",    # 应该回忆起"LangChain""自动驾驶"
+    "我的宠物怎么样了",  # 应该回忆起"猫叫小橘"
+    "有什么技术值得学",  # 应该回忆起"LangChain""自动驾驶"
 ]
 
 print('【向量记忆检索演示——按语义相关性"回忆"】')
@@ -401,15 +417,20 @@ for query in TEST_QUERIES:
 print("【完整演示：向量记忆 + 对话】")
 print()
 
-vector_prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是一个有记忆力的 AI 助手。
+vector_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一个有记忆力的 AI 助手。
 
 以下是你对用户的"回忆"（来自之前的对话）：
 {recalled_memories}
 
-利用这些回忆来个性化你的回答。回答简洁（50字以内）。"""),
-    ("human", "{question}"),
-])
+利用这些回忆来个性化你的回答。回答简洁（50字以内）。""",
+        ),
+        ("human", "{question}"),
+    ]
+)
 
 vector_chain = vector_prompt | llm | StrOutputParser()
 
@@ -421,15 +442,21 @@ FINAL_QUESTIONS = [
 for question in FINAL_QUESTIONS:
     # 检索相关记忆
     memories = vector_mem.recall(question, k=2)
-    memory_text = "\n".join(doc.page_content for doc in memories) if memories else "暂无相关回忆"
+    memory_text = (
+        "\n".join(doc.page_content for doc in memories) if memories else "暂无相关回忆"
+    )
 
-    answer = vector_chain.invoke({
-        "question": question,
-        "recalled_memories": memory_text,
-    })
+    answer = vector_chain.invoke(
+        {
+            "question": question,
+            "recalled_memories": memory_text,
+        }
+    )
 
     print(f"  ❓ 用户：{question}")
-    print(f"  💭 激活记忆：{memories[0].metadata.get('user_message', '')[:30] if memories else '无'}...")
+    print(
+        f"  💭 激活记忆：{memories[0].metadata.get('user_message', '')[:30] if memories else '无'}..."
+    )
     print(f"  🤖 AI：{answer}")
     print()
 

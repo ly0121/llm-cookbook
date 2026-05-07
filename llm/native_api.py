@@ -156,10 +156,10 @@ print()
 print("【正在调用 API（阻塞中，请稍候...）】")
 
 response = client.chat.completions.create(
-    model=MODEL_NAME,       # 指定模型
-    messages=messages,      # 发送对话历史
-    temperature=0.7,        # 温度：0.7 = 黄金平衡点（见文件头科普）
-    max_tokens=200,         # 最多生成 200 个 token（防止回复过长）
+    model=MODEL_NAME,  # 指定模型
+    messages=messages,  # 发送对话历史
+    temperature=0.7,  # 温度：0.7 = 黄金平衡点（见文件头科普）
+    max_tokens=200,  # 最多生成 200 个 token（防止回复过长）
     # stream=False          # 默认就是 False（阻塞式），注释掉是为了和第2章对比
 )
 
@@ -183,12 +183,16 @@ print()
 
 # choices：一个列表，通常只有一个元素（除非你设置了 n>1 要求多个备选）
 # choices[0] 就是 AI 的第一条（也是唯一一条）回复
-print(f"  ① response.choices  （类型: {type(response.choices)}，长度: {len(response.choices)}）")
+print(
+    f"  ① response.choices  （类型: {type(response.choices)}，长度: {len(response.choices)}）"
+)
 print(f"     → choices 是一个列表，每个元素是一个候选回复（通常只有 1 个）")
 print()
 
 # message：这一轮的完整消息对象（包含 role 和 content）
-print(f"  ② response.choices[0].message  （类型: {type(response.choices[0].message).__name__}）")
+print(
+    f"  ② response.choices[0].message  （类型: {type(response.choices[0].message).__name__}）"
+)
 print(f"     → role: {response.choices[0].message.role!r}")
 print(f"     → content（AI 实际说的话）：")
 print(f"       【{response.choices[0].message.content}】")

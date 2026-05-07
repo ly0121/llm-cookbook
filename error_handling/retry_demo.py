@@ -78,10 +78,12 @@ MODEL_NAME = "kivy-kimi-k2_5"
 
 llm = ChatOpenAI(model=MODEL_NAME, api_key=API_KEY, base_url=BASE_URL, temperature=0.7)
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "你是一位简洁的科普作家，回答控制在50字以内。"),
-    ("human", "{question}"),
-])
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "你是一位简洁的科普作家，回答控制在50字以内。"),
+        ("human", "{question}"),
+    ]
+)
 parser = StrOutputParser()
 chain = prompt | llm | parser
 
@@ -209,9 +211,11 @@ print()
 #   ② 外部 API 不可用 → 用本地缓存兜底
 #   ③ 复杂链失败 → 用简单链（直接返回搜索结果）兜底
 
+
 # 模拟一个"总是失败"的主链
 def always_fail(input_dict: dict) -> str:
     raise RuntimeError("主力模型不可用！")
+
 
 primary_chain = RunnableLambda(always_fail)
 
@@ -287,7 +291,9 @@ class ResilientInvoker:
                 last_error = e
                 if attempt < self.max_retries:
                     # 指数退避 + 随机抖动
-                    delay = self.base_delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                    delay = self.base_delay * (2 ** (attempt - 1)) + random.uniform(
+                        0, 0.5
+                    )
                     print(f"    ⚠️ 第{attempt}次失败: {type(e).__name__}")
                     print(f"       等待 {delay:.1f}s 后重试...")
                     time.sleep(delay)
@@ -297,13 +303,21 @@ class ResilientInvoker:
             try:
                 print(f"    🔄 主链 {self.max_retries} 次全部失败，尝试降级方案...")
                 result = self.fallback.invoke(input_dict)
-                return {"answer": result, "source": "fallback", "attempts": self.max_retries}
+                return {
+                    "answer": result,
+                    "source": "fallback",
+                    "attempts": self.max_retries,
+                }
             except Exception as e:
                 print(f"    ❌ 降级方案也失败: {e}")
 
         # 阶段三：返回兜底响应
         print(f"    🛑 所有方案均失败，返回兜底响应")
-        return {"answer": self.fallback_message, "source": "default", "attempts": self.max_retries}
+        return {
+            "answer": self.fallback_message,
+            "source": "default",
+            "attempts": self.max_retries,
+        }
 
 
 # ── 演示完整容错流程 ───────────────────────────────────────
@@ -347,7 +361,9 @@ print()
 print("  ─── 演示全部失败 → 降级 ───")
 print()
 
-always_fail_chain = RunnableLambda(lambda x: (_ for _ in ()).throw(RuntimeError("全挂")))
+always_fail_chain = RunnableLambda(
+    lambda x: (_ for _ in ()).throw(RuntimeError("全挂"))
+)
 
 invoker2 = ResilientInvoker(
     primary_chain=always_fail_chain,

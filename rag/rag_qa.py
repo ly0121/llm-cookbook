@@ -265,7 +265,7 @@ print()
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=500,
     chunk_overlap=50,
-    length_function=len,    # 用字符数计算长度（不是 token 数）
+    length_function=len,  # 用字符数计算长度（不是 token 数）
 )
 
 # 把单个 Document 对象切割成多个小块（仍然是 Document 列表）
@@ -312,8 +312,8 @@ print("【正在向量化所有文本块，请稍候（本地推理，首次运�
 #   本教学代码为了简洁，不做持久化。
 
 vectorstore = FAISS.from_documents(
-    documents=chunks,       # 所有文本块（来自第1章）
-    embedding=embeddings,   # 用第0章初始化的 Embeddings 客户端
+    documents=chunks,  # 所有文本块（来自第1章）
+    embedding=embeddings,  # 用第0章初始化的 Embeddings 客户端
 )
 
 print("✅ 向量化完成！FAISS 索引已建立")
@@ -402,15 +402,20 @@ print()
 # RAG 提示词的关键：把"检索到的上下文"和"用户问题"都塞进去
 # 并明确告诉 LLM "只能基于这些资料回答，不能乱编"
 
-rag_prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是一个严谨的知识库问答助手。
+rag_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一个严谨的知识库问答助手。
 请仅根据下面提供的【参考资料】来回答用户的问题。
 如果参考资料中没有相关信息，请直接说"根据现有资料，我无法回答这个问题"，不要猜测或编造。
 
 【参考资料】
-{context}"""),
-    ("human", "{question}"),
-])
+{context}""",
+        ),
+        ("human", "{question}"),
+    ]
+)
 
 # ── 构建文档格式化函数 ────────────────────────────────────
 #
@@ -418,12 +423,14 @@ rag_prompt = ChatPromptTemplate.from_messages([
 # 但提示词模板里的 {context} 需要字符串。
 # 这个函数把多个文档块拼接成一段文字。
 
+
 def format_docs(docs: list) -> str:
     """把检索到的文档块列表拼接成字符串，用分隔符隔开"""
     return "\n\n---\n\n".join(
         f"[来源: {doc.metadata.get('source', '未知')}]\n{doc.page_content}"
         for doc in docs
     )
+
 
 # ── 构建 RAG 链（LCEL 语法） ──────────────────────────────
 #
@@ -451,8 +458,8 @@ parser = StrOutputParser()
 
 rag_chain = (
     RunnableParallel(
-        context=retriever | format_docs,       # 检索 → 格式化为字符串
-        question=RunnablePassthrough(),         # 原样保留问题字符串
+        context=retriever | format_docs,  # 检索 → 格式化为字符串
+        question=RunnablePassthrough(),  # 原样保留问题字符串
     )
     | rag_prompt
     | llm
@@ -472,7 +479,9 @@ def rag_query(question: str) -> str:
 
     # 先单独检索，打印召回的原文（让你看到大模型"翻的是哪页书"）
     retrieved_docs = retriever.invoke(question)
-    print(f"\n📚 检索召回了 {len(retrieved_docs)} 个相关文本块（大模型将基于这些资料回答）：")
+    print(
+        f"\n📚 检索召回了 {len(retrieved_docs)} 个相关文本块（大模型将基于这些资料回答）："
+    )
     for i, doc in enumerate(retrieved_docs, 1):
         preview = doc.page_content[:120].replace("\n", " ")
         print(f"   [{i}] {preview}...")

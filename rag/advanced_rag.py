@@ -208,7 +208,6 @@ REPORT_PAGES = [
         "section": "第一章：公司概况",
         "year": 2024,
     },
-
     # ═══ 第二章：财务数据（第3-4页）═══
     {
         "content": """2024年度财务概要：
@@ -242,7 +241,6 @@ Q4营收增速显著加快，主要得益于：
         "section": "第二章：财务数据",
         "year": 2024,
     },
-
     # ═══ 第三章：技术研发（第5-6页）═══
     {
         "content": """核心技术突破——感知系统：
@@ -286,7 +284,6 @@ Q4营收增速显著加快，主要得益于：
         "section": "第三章：技术研发",
         "year": 2024,
     },
-
     # ═══ 第四章：市场与竞争（第7-8页）═══
     {
         "content": """市场格局分析：
@@ -344,9 +341,9 @@ for page_data in REPORT_PAGES:
         page_content=page_data["content"],
         metadata={
             "source": "智驾科技2024年度报告.pdf",
-            "page": page_data["page"],            # 📄 页码（int，支持范围过滤）
-            "section": page_data["section"],       # 📂 章节（str，支持精确匹配）
-            "year": page_data["year"],             # 📅 年份（int）
+            "page": page_data["page"],  # 📄 页码（int，支持范围过滤）
+            "section": page_data["section"],  # 📂 章节（str，支持精确匹配）
+            "year": page_data["year"],  # 📅 年份（int）
         },
     )
     documents.append(doc)
@@ -382,8 +379,8 @@ print()
 # 这就是 LangChain 的设计巧思：切块不丢元数据！
 
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=300,       # 较小的 chunk_size，制造更多切块（便于演示过滤效果）
-    chunk_overlap=30,     # 相邻块重叠 30 字，防止句子被切断
+    chunk_size=300,  # 较小的 chunk_size，制造更多切块（便于演示过滤效果）
+    chunk_overlap=30,  # 相邻块重叠 30 字，防止句子被切断
     length_function=len,
 )
 
@@ -402,7 +399,9 @@ for i, chunk in enumerate(chunks):
     page = chunk.metadata["page"]
     section = chunk.metadata["section"]
     content_preview = chunk.metadata.get("source", "")[:15]
-    print(f"  │ {i:4d} │ 第 {page} 页{' ' * (20 - len(str(page)))}│ {section[:16]:16s} │")
+    print(
+        f"  │ {i:4d} │ 第 {page} 页{' ' * (20 - len(str(page)))}│ {section[:16]:16s} │"
+    )
 print("  └──────┴──────────────────────────┴──────────────────┘")
 print()
 print("  💡 观察：每个 chunk 都保留了来源页码和章节信息！")
@@ -479,22 +478,20 @@ def demo_metadata_filter(query: str, metadata_filter: dict, description: str):
     print()
 
     # 带 filter 的检索
-    filtered_results = vectorstore.similarity_search(
-        query, k=3, filter=metadata_filter
-    )
+    filtered_results = vectorstore.similarity_search(query, k=3, filter=metadata_filter)
 
     # 不带 filter 的检索（对比）
     unfiltered_results = vectorstore.similarity_search(query, k=3)
 
     print(f"  【不带过滤】召回的块来自：")
     for i, doc in enumerate(unfiltered_results):
-        print(f"    [{i+1}] 第{doc.metadata['page']}页 - {doc.metadata['section']}")
+        print(f"    [{i + 1}] 第{doc.metadata['page']}页 - {doc.metadata['section']}")
         print(f"        内容预览：{doc.page_content[:60]}...")
 
     print()
     print(f"  【带过滤 filter={metadata_filter}】召回的块来自：")
     for i, doc in enumerate(filtered_results):
-        print(f"    [{i+1}] 第{doc.metadata['page']}页 - {doc.metadata['section']}")
+        print(f"    [{i + 1}] 第{doc.metadata['page']}页 - {doc.metadata['section']}")
         print(f"        内容预览：{doc.page_content[:60]}...")
 
     print()
@@ -616,7 +613,7 @@ print()
 raw_results = base_retriever.invoke(demo_query)
 print(f"  【初选结果】共 {len(raw_results)} 个块：")
 for i, doc in enumerate(raw_results):
-    print(f"    [{i+1}] 第{doc.metadata['page']}页 | {doc.metadata['section']}")
+    print(f"    [{i + 1}] 第{doc.metadata['page']}页 | {doc.metadata['section']}")
     print(f"        {doc.page_content[:70]}...")
 print()
 
@@ -624,7 +621,7 @@ print()
 reranked_results = reranking_retriever.invoke(demo_query)
 print(f"  【重排序后】精选为 {len(reranked_results)} 个块：")
 for i, doc in enumerate(reranked_results):
-    print(f"    [{i+1}] 第{doc.metadata['page']}页 | {doc.metadata['section']}")
+    print(f"    [{i + 1}] 第{doc.metadata['page']}页 | {doc.metadata['section']}")
     print(f"        {doc.page_content[:70]}...")
 print()
 print("  💡 重排序去掉了冗余和低相关性的块，结果更精准！")
@@ -656,8 +653,11 @@ print()
 #   因为 LLM 可能会"编造"引用！
 #   正确做法：由程序逻辑（而非 LLM）负责追踪引用来源。
 
-rag_prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是智驾科技公司的内部知识库问答助手。
+rag_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是智驾科技公司的内部知识库问答助手。
 请严格根据下面提供的【参考资料】来回答用户的问题。
 如果参考资料中没有相关信息，请直接说"根据现有资料，我无法回答这个问题"。
 不要编造或猜测参考资料中没有的内容。
@@ -668,9 +668,11 @@ rag_prompt = ChatPromptTemplate.from_messages([
 3. 如果涉及对比，请列出具体数据
 
 【参考资料】
-{context}"""),
-    ("human", "{question}"),
-])
+{context}""",
+        ),
+        ("human", "{question}"),
+    ]
+)
 
 parser = StrOutputParser()
 
@@ -696,13 +698,9 @@ def advanced_rag_query(question: str, use_filter: dict = None) -> None:
         # 带元数据过滤的检索
         print(f"  📂 元数据过滤条件：{use_filter}")
         # 先用 filter 做初选
-        filtered_docs = vectorstore.similarity_search(
-            question, k=6, filter=use_filter
-        )
+        filtered_docs = vectorstore.similarity_search(question, k=6, filter=use_filter)
         # 再用重排序管道做二次过滤
-        retrieved_docs = compressor_pipeline.compress_documents(
-            filtered_docs, question
-        )
+        retrieved_docs = compressor_pipeline.compress_documents(filtered_docs, question)
     else:
         # 不带过滤，直接用重排序检索器
         retrieved_docs = reranking_retriever.invoke(question)
@@ -732,10 +730,12 @@ def advanced_rag_query(question: str, use_filter: dict = None) -> None:
 
     # 调用 RAG 链
     chain = rag_prompt | llm | parser
-    answer = chain.invoke({
-        "context": context_text,
-        "question": question,
-    })
+    answer = chain.invoke(
+        {
+            "context": context_text,
+            "question": question,
+        }
+    )
 
     # ── 步骤四：输出回答 + 引用来源 ──────────────────────
     print("  ┌─────────────────────────────────────────────────────┐")
@@ -760,11 +760,13 @@ def advanced_rag_query(question: str, use_filter: dict = None) -> None:
         page = doc.metadata["page"]
         if page not in seen_pages:
             seen_pages.add(page)
-            sources.append({
-                "page": page,
-                "section": doc.metadata["section"],
-                "source": doc.metadata["source"],
-            })
+            sources.append(
+                {
+                    "page": page,
+                    "section": doc.metadata["section"],
+                    "source": doc.metadata["source"],
+                }
+            )
 
     # 按页码排序
     sources.sort(key=lambda x: x["page"])

@@ -197,7 +197,9 @@ def get_weather(city: str, unit: str = "celsius") -> str:
     else:
         unit_label = "°C"
 
-    return f"{city}：{data['weather']}，温度 {temp}{unit_label}，湿度 {data['humidity']}%"
+    return (
+        f"{city}：{data['weather']}，温度 {temp}{unit_label}，湿度 {data['humidity']}%"
+    )
 
 
 # ── 工具二：幂次计算（多参数，直接传 int）─────────────────
@@ -205,6 +207,7 @@ def get_weather(city: str, unit: str = "celsius") -> str:
 # 对比项目三的 calculate_power(base_and_exponent: str)：
 #   项目三：LLM 传 "2,10" → 函数自己 split 解析
 #   本项目：LLM 传 {"base": 2, "exponent": 10} → 直接拿到 int
+
 
 @tool
 def calculate_power(base: int, exponent: int) -> str:
@@ -214,7 +217,7 @@ def calculate_power(base: int, exponent: int) -> str:
         base: 底数（整数）
         exponent: 指数（整数）
     """
-    result = base ** exponent
+    result = base**exponent
     return f"{base} 的 {exponent} 次方 = {result}"
 
 
@@ -222,6 +225,7 @@ def calculate_power(base: int, exponent: int) -> str:
 #
 # 这是 ReAct Agent 完全做不到的！
 # 列表参数在 Tool Calling 中天然支持。
+
 
 @tool
 def compare_cities_weather(cities: list[str]) -> str:
@@ -236,13 +240,16 @@ def compare_cities_weather(cities: list[str]) -> str:
     for city in cities:
         data = WEATHER_DATA.get(city)
         if data:
-            results.append(f"| {city} | {data['weather']} | {data['temp_c']}°C | {data['humidity']}% |")
+            results.append(
+                f"| {city} | {data['weather']} | {data['temp_c']}°C | {data['humidity']}% |"
+            )
         else:
             results.append(f"| {city} | 暂无数据 | - | - |")
     return "\n".join(results)
 
 
 # ── 工具四：行程规划（演示复杂多参数）────────────────────
+
 
 @tool
 def plan_trip(
@@ -265,7 +272,7 @@ def plan_trip(
         f"共 {days} 天{budget_info}。\n"
         f"建议安排：\n"
         f"  Day 1: 抵达{destination}，市区游览\n"
-        f"  Day 2-{max(2, days-1)}: 景点深度游\n"
+        f"  Day 2-{max(2, days - 1)}: 景点深度游\n"
         f"  Day {days}: 返回{origin}"
     )
 
@@ -323,8 +330,11 @@ print()
 #   AgentExecutor 用这个位置存放"工具调用和返回"的中间消息。
 #   如果没有这个占位符，Agent 循环会报错。
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是一个智能旅行和生活助手。你可以：
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一个智能旅行和生活助手。你可以：
 1. 查询城市天气（支持指定温度单位）
 2. 进行数学幂次计算
 3. 对比多个城市的天气
@@ -332,15 +342,17 @@ prompt = ChatPromptTemplate.from_messages([
 
 请根据用户的问题，选择合适的工具来回答。
 如果用户的问题不需要调用工具，直接用你的知识回答即可。
-回答请使用中文。"""),
-    # MessagesPlaceholder：Agent 中间推理过程的存放位置
-    # AgentExecutor 每轮循环会把：
-    #   ① LLM 的 tool_calls 消息
-    #   ② 工具返回的 ToolMessage
-    # 都追加到这个位置，让 LLM 在下一轮能"看到"之前的工具结果
-    MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ("human", "{input}"),
-])
+回答请使用中文。""",
+        ),
+        # MessagesPlaceholder：Agent 中间推理过程的存放位置
+        # AgentExecutor 每轮循环会把：
+        #   ① LLM 的 tool_calls 消息
+        #   ② 工具返回的 ToolMessage
+        # 都追加到这个位置，让 LLM 在下一轮能"看到"之前的工具结果
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ("human", "{input}"),
+    ]
+)
 
 print("【Prompt 模板结构】")
 print("  [system]  → 角色定义 + 能力说明")
@@ -374,9 +386,9 @@ agent = create_tool_calling_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(
     agent=agent,
     tools=tools,
-    verbose=True,               # 打印完整推理过程
-    handle_parsing_errors=True, # 格式错误时自我纠正
-    max_iterations=8,           # 最多循环次数
+    verbose=True,  # 打印完整推理过程
+    handle_parsing_errors=True,  # 格式错误时自我纠正
+    max_iterations=8,  # 最多循环次数
 )
 
 print("✅ Tool Calling Agent 构建完成！")
@@ -523,6 +535,7 @@ print()
 
 class CurrencyConvertInput(BaseModel):
     """货币转换工具的参数定义"""
+
     amount: float = Field(description="要转换的金额数值")
     from_currency: str = Field(
         description="源货币代码，如 CNY（人民币）、USD（美元）、JPY（日元）、EUR（欧元）"

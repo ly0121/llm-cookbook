@@ -14,7 +14,7 @@ hero:
       link: /guide/roadmap
     - theme: alt
       text: GitHub
-      link: https://github.com/liuyu22/llm-cookbook
+      link: https://github.com/ly0121/llm-cookbook
 
 features:
   - icon: 🧠

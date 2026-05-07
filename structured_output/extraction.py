@@ -230,7 +230,7 @@ class ResumeInfo(BaseModel):
     #   未提及             → False（默认值）
     is_remote_ok: bool = Field(
         default=False,
-        description="候选人是否接受远程工作（True=接受远程, False=不接受或未提及）"
+        description="候选人是否接受远程工作（True=接受远程, False=不接受或未提及）",
     )
 
     # ── 字段六：工作年限（Optional[int] 类型）─────────────
@@ -239,8 +239,7 @@ class ResumeInfo(BaseModel):
     # 这是"可选字段"的标准写法。
     # 如果文本中没有提到工作年限，大模型应该返回 None 而不是瞎猜。
     years_of_experience: Optional[int] = Field(
-        default=None,
-        description="候选人的工作年限（整数），如果文本中未提及则为null"
+        default=None, description="候选人的工作年限（整数），如果文本中未提及则为null"
     )
 
 
@@ -302,17 +301,22 @@ print()
 # 因为 with_structured_output 已经通过 Schema 告诉 LLM 每个字段的含义了。
 # Prompt 只需要说明任务和要求即可。
 
-extraction_prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是一个专业的简历信息提取助手。
+extraction_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一个专业的简历信息提取助手。
 你的任务是从用户提供的非结构化文本中，精准提取候选人的关键信息。
 
 提取规则：
 1. 如果某项信息在文本中没有明确提及，对应字段使用 null（可选字段）或合理默认值
 2. 薪资统一转换为人民币元/月（"25k"=25000, "2万5"=25000）
 3. 技能列表要细分，不要合并（"Python和Java" → ["Python", "Java"]）
-4. 年龄如果是中文数字要转为阿拉伯数字"""),
-    ("human", "请从以下文本中提取候选人信息：\n\n{text}"),
-])
+4. 年龄如果是中文数字要转为阿拉伯数字""",
+        ),
+        ("human", "请从以下文本中提取候选人信息：\n\n{text}"),
+    ]
+)
 
 # 用 LCEL 管道把 prompt 和 structured_llm 串联
 extraction_chain = extraction_prompt | structured_llm
@@ -412,7 +416,9 @@ def run_extraction(title: str, text: str) -> ResumeInfo:
     print(f"     result.name 的类型 : {type(result.name).__name__}")
     print(f"     result.age 的类型  : {type(result.age).__name__}")
     print(f"     result.skills 的类型: {type(result.skills).__name__}")
-    print(f"     skills[0] 的类型   : {type(result.skills[0]).__name__ if result.skills else 'N/A'}")
+    print(
+        f"     skills[0] 的类型   : {type(result.skills[0]).__name__ if result.skills else 'N/A'}"
+    )
     print()
 
     # 用 assert 断言验证（如果类型不对会直接报错，保证严格性）
@@ -461,6 +467,7 @@ print()
 
 class InvoiceItem(BaseModel):
     """发票中的单个商品/服务项目"""
+
     item_name: str = Field(description="商品或服务的名称")
     quantity: int = Field(description="数量")
     unit_price: float = Field(description="单价（人民币元）")
@@ -473,6 +480,7 @@ class InvoiceInfo(BaseModel):
     包含：基本信息 + 商品行列表（list[InvoiceItem]）
     大模型会看到嵌套的 Schema 定义，自动提取多层结构。
     """
+
     invoice_number: str = Field(description="发票号码")
     date: str = Field(description="开票日期，格式为 YYYY-MM-DD")
     seller: str = Field(description="销售方/开票方的公司名称")
@@ -486,13 +494,18 @@ class InvoiceInfo(BaseModel):
 
 invoice_llm = llm.with_structured_output(InvoiceInfo)
 
-invoice_prompt = ChatPromptTemplate.from_messages([
-    ("system", """你是一个专业的发票信息提取助手。
+invoice_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """你是一个专业的发票信息提取助手。
 请从用户提供的发票文本或描述中，精准提取所有关键信息。
 日期统一转换为 YYYY-MM-DD 格式。
-金额统一为人民币元。"""),
-    ("human", "请从以下内容中提取发票信息：\n\n{text}"),
-])
+金额统一为人民币元。""",
+        ),
+        ("human", "请从以下内容中提取发票信息：\n\n{text}"),
+    ]
+)
 
 invoice_chain = invoice_prompt | invoice_llm
 
@@ -548,7 +561,9 @@ print("  🔬 嵌套对象类型验证：")
 print(f"     invoice_result 类型         : {type(invoice_result).__name__}")
 print(f"     invoice_result.items 类型   : {type(invoice_result.items).__name__}")
 print(f"     invoice_result.items[0] 类型: {type(invoice_result.items[0]).__name__}")
-print(f"     是 InvoiceItem 实例?        : {isinstance(invoice_result.items[0], InvoiceItem)}")
+print(
+    f"     是 InvoiceItem 实例?        : {isinstance(invoice_result.items[0], InvoiceItem)}"
+)
 print()
 
 assert isinstance(invoice_result, InvoiceInfo)
