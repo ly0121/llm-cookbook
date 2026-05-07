@@ -1,0 +1,120 @@
+:root {
+  --vp-c-brand-1: #6366f1;
+  --vp-c-brand-2: #4f46e5;
+  --vp-c-brand-3: #4338ca;
+  --vp-c-brand-soft: rgba(99, 102, 241, 0.14);
+}
+
+.dark {
+  --vp-c-brand-1: #818cf8;
+  --vp-c-brand-2: #6366f1;
+  --vp-c-brand-3: #4f46e5;
+  --vp-c-brand-soft: rgba(129, 140, 248, 0.14);
+}
+
+/* Python Runner 组件样式 */
+.python-runner {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.python-runner__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--vp-c-bg-soft);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.python-runner__header span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--vp-c-text-2);
+}
+
+.python-runner__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.python-runner__btn {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.python-runner__btn--run {
+  background: var(--vp-c-brand-1);
+  color: white;
+}
+
+.python-runner__btn--run:hover {
+  background: var(--vp-c-brand-2);
+}
+
+.python-runner__btn--run:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.python-runner__btn--reset {
+  background: var(--vp-c-bg-mute);
+  color: var(--vp-c-text-2);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.python-runner__editor {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  border: none;
+  resize: vertical;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-1);
+}
+
+.python-runner__editor:focus {
+  outline: none;
+}
+
+.python-runner__output {
+  padding: 12px 16px;
+  background: #1a1a2e;
+  color: #16c784;
+  font-family: var(--vp-font-family-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  min-height: 40px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.python-runner__output--error {
+  color: #ef4444;
+}
+
+.python-runner__status {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+  padding: 4px 16px 8px;
+  background: #1a1a2e;
+}
+
+/* 首页网格 */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
