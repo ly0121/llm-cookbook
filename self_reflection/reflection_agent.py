@@ -101,10 +101,9 @@ print("Chapter 0: 初始化 — 自我反思 Agent 的基础设施")
 print("=" * 70)
 
 # ── API 配置 ──────────────────────────────────────────────────────────────
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 # ── 创建 LLM 实例 ────────────────────────────────────────────────────────
 # temperature=0.7: 生成时需要一些创造力
 # max_tokens=1024: 限制输出长度，避免超时

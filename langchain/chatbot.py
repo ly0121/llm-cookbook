@@ -96,10 +96,9 @@ print("=" * 60)
 #
 # 这里为了教学方便，直接写死，生产环境请务必用方式二或三！
 
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 # 使用的模型名称
 MODEL_NAME = "kivy-kimi-k2_5"
 

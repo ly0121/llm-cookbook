@@ -42,9 +42,27 @@ export default defineConfig({
           collapsed: false,
           items: [
             { text: "什么是大语言模型", link: "/llm/" },
+            { text: "NLP 技术演进史", link: "/llm/nlp-evolution" },
+            { text: "Transformer 架构详解", link: "/llm/transformer" },
             { text: "提示工程", link: "/llm/prompt-engineering" },
             { text: "Tokenization", link: "/llm/tokenization" },
             { text: "文本生成机制", link: "/llm/generation" },
+            { text: "Embedding 词向量", link: "/llm/embedding" },
+            { text: "Function Calling", link: "/llm/function-calling" },
+            { text: "开源模型生态", link: "/llm/open-source-models" },
+          ],
+        },
+        {
+          text: "一（续）、LLM 生产级知识",
+          collapsed: true,
+          items: [
+            { text: "推理部署与加速", link: "/llm/inference" },
+            { text: "企业级 RAG 工程化", link: "/llm/rag-engineering" },
+            { text: "LLM 评测与测试", link: "/llm/evaluation" },
+            { text: "可观测性与 LLMOps", link: "/llm/observability" },
+            { text: "安全合规与护栏", link: "/llm/security" },
+            { text: "生产级数据工程", link: "/llm/data-engineering" },
+            { text: "进阶方向与前沿技术", link: "/llm/advanced-topics" },
           ],
         },
         {

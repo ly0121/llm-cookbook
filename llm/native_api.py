@@ -89,16 +89,9 @@ print("=" * 60)
 # base_url：告诉 SDK "不要连 OpenAI 官方，连这个兼容接口"
 #            只要目标接口遵循 OpenAI 的 API 格式，就能无缝切换
 
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
-# 创建 OpenAI 客户端实例
-# 这个 client 对象是你与 LLM 通信的"电话机"，后续所有调用都通过它
-client = OpenAI(
-    api_key=API_KEY,
-    base_url=BASE_URL,
-)
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import client, MODEL_NAME
 
 print(f"✅ OpenAI 原生客户端初始化完成")
 print(f"   模型: {MODEL_NAME}")
@@ -158,7 +151,7 @@ print("【正在调用 API（阻塞中，请稍候...）】")
 response = client.chat.completions.create(
     model=MODEL_NAME,  # 指定模型
     messages=messages,  # 发送对话历史
-    temperature=0.7,  # 温度：0.7 = 黄金平衡点（见文件头科普）
+    # temperature=0.7,  # 注意：claude-opus-4-7 不支持 temperature 参数
     max_tokens=200,  # 最多生成 200 个 token（防止回复过长）
     # stream=False          # 默认就是 False（阻塞式），注释掉是为了和第2章对比
 )
@@ -268,7 +261,7 @@ print("AI：", end="", flush=True)  # 先打印"AI："前缀，不换行
 stream = client.chat.completions.create(
     model=MODEL_NAME,
     messages=messages_stream,
-    temperature=0.7,
+    # temperature=0.7,  # 注意：claude-opus-4-7 不支持 temperature 参数
     max_tokens=300,
     stream=True,  # 🔑 关键参数！开启流式输出
 )

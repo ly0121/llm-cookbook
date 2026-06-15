@@ -101,10 +101,9 @@ print("━" * 70)
 # 这里我们使用统一的 API 网关配置
 # 所有项目共享同一套配置，方便管理
 
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 print(f"[配置] API Base URL: {BASE_URL}")
 print(f"[配置] Model: {MODEL_NAME}")
 

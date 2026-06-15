@@ -95,10 +95,9 @@ print("第 0 章：初始化 LLM")
 print("=" * 60)
 
 # 教学用硬编码；生产环境请改用环境变量：os.environ["OPENAI_API_KEY"]
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 # Agent 场景建议 temperature=0：需要精确推理和格式遵循，不要创意发散
 llm = ChatOpenAI(
     model=MODEL_NAME,

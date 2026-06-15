@@ -40,13 +40,9 @@ LLM 生成文本的过程，本质上是一个"逐步选词"的循环：
 # 第 0 章：初始化与生成策略总览
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-from openai import OpenAI
-
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
-client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import client, MODEL_NAME
 
 print("=" * 60)
 print("第 0 章：生成策略总览")
@@ -98,7 +94,7 @@ print("""
 #   形象比喻：
 #     T=0  像"开卷考试只抄标准答案"——每次都一样
 #     T=1  像"正常发挥"——有随机性但整体合理
-#     T=1.5 像"灵感爆发的诗人"——天马行空但可能跑偏
+#     T=1  像"灵感爆发的诗人"——随机性最大（Claude 范围为 0~1）
 
 print("=" * 60)
 print("第 1 章：Temperature 实验")
@@ -109,7 +105,7 @@ print("  观察：temperature=0 时 3 次结果是否一样？高温度时呢？
 print()
 
 TEMP_PROMPT = "用一句话描述月亮。"
-TEMPERATURES = [0.0, 0.5, 1.0, 1.5]
+TEMPERATURES = [0.0, 0.3, 0.7, 1.0]
 
 for temp in TEMPERATURES:
     print(f"── Temperature = {temp} {'─' * 40}")
@@ -133,7 +129,7 @@ for temp in TEMPERATURES:
 print("💡 观察要点：")
 print("   - temperature=0 时，3 次结果应该完全一样（贪婪解码，确定性输出）")
 print("   - temperature 越高，3 次结果差异越大（随机性增加）")
-print("   - temperature=1.5 时可能出现不通顺的表达（概率分布过于平坦）")
+print("   - temperature=1.0 时随机性最大（Claude 范围为 0~1）")
 print()
 
 
@@ -163,7 +159,7 @@ print()
 #   │  ░         "冰轮" (3%)                                 │
 #   │  ░         "蟾宫" (2%)                                 │
 #   │                                                        │
-#   │  top_p=0.65 → 只保留前3个词（累积=40+25=65%）          │
+#   │  top_p=0.65 → 只保留前2个词（累积=40+25=65%）          │
 #   │  top_p=0.9  → 保留前4个词（累积=40+25+15+10=90%）      │
 #   └────────────────────────────────────────────────────────┘
 
@@ -175,9 +171,9 @@ print()
 TOP_P_PROMPT = "请列举三种你喜欢的水果，并各写一个形容词。"
 TOP_P_VALUES = [0.1, 0.5, 0.9, 1.0]
 
-# 固定 temperature=0.8，这样可以单独看 top_p 的效果
+# 注意：Claude 不支持同时设置 temperature 和 top_p，所以这里只设 top_p
 for top_p in TOP_P_VALUES:
-    print(f"── top_p = {top_p} (temperature=0.8) {'─' * 30}")
+    print(f"── top_p = {top_p} {'─' * 40}")
     for trial in range(1, 3):
         response = client.chat.completions.create(
             model=MODEL_NAME,
@@ -185,7 +181,6 @@ for top_p in TOP_P_VALUES:
                 {"role": "system", "content": "你是一个活泼的美食博主，回答简洁有趣。"},
                 {"role": "user", "content": TOP_P_PROMPT},
             ],
-            temperature=0.8,
             top_p=top_p,
             max_tokens=100,
         )
@@ -196,8 +191,8 @@ for top_p in TOP_P_VALUES:
 print("💡 观察要点：")
 print("   - top_p=0.1 时回答非常保守，用词重复率高")
 print("   - top_p=0.9 时回答更多样，出现更有创意的形容词")
-print("   - top_p 和 temperature 同时控制多样性，通常只调其中一个")
-print("   - OpenAI 官方建议：调 temperature 就把 top_p 设为 1，反之亦然")
+print("   - Claude 不支持同时设置 temperature 和 top_p，只能选其一")
+print("   - 一般建议：需要确定性用 temperature=0，需要多样性用 top_p")
 print()
 
 
@@ -251,15 +246,13 @@ response_no_penalty = client.chat.completions.create(
     ],
     temperature=0.7,
     max_tokens=200,
-    frequency_penalty=0.0,
-    presence_penalty=0.0,
 )
-print("  [无惩罚] frequency_penalty=0, presence_penalty=0:")
+print("  [基准] temperature=0.7:")
 print(f"  {response_no_penalty.choices[0].message.content.strip()}")
 print()
 
-# ── 3.2 frequency_penalty 的效果 ────────────────────────────
-print("── 3.2 添加 frequency_penalty=1.5 ──────────────────")
+# ── 3.2 低温度对比（模拟减少重复的效果）────────────────────
+print("── 3.2 低温度 temperature=0.3（更保守，减少重复）──────")
 print()
 
 response_freq = client.chat.completions.create(
@@ -268,39 +261,35 @@ response_freq = client.chat.completions.create(
         {"role": "system", "content": "你是一位散文作家。"},
         {"role": "user", "content": REPEAT_PROMPT},
     ],
-    temperature=0.7,
+    temperature=0.3,
     max_tokens=200,
-    frequency_penalty=1.5,
-    presence_penalty=0.0,
 )
-print("  [频率惩罚] frequency_penalty=1.5:")
+print("  [低温度] temperature=0.3:")
 print(f"  {response_freq.choices[0].message.content.strip()}")
 print()
 
-# ── 3.3 presence_penalty 的效果 ─────────────────────────────
-print("── 3.3 添加 presence_penalty=1.5 ──────────────────")
+# ── 3.3 高温度对比（模拟鼓励多样性的效果）──────────────────
+print("── 3.3 高温度 temperature=1.0（更多样，鼓励新词）─────")
 print()
 
 response_pres = client.chat.completions.create(
     model=MODEL_NAME,
     messages=[
-        {"role": "system", "content": "你是一位散文作家。"},
+        {"role": "system", "content": "你是一位散文作家，请用丰富多样的词汇，避免重复用词。"},
         {"role": "user", "content": REPEAT_PROMPT},
     ],
-    temperature=0.7,
+    temperature=1.0,
     max_tokens=200,
-    frequency_penalty=0.0,
-    presence_penalty=1.5,
 )
-print("  [存在惩罚] presence_penalty=1.5:")
+print("  [高温度] temperature=1.0:")
 print(f"  {response_pres.choices[0].message.content.strip()}")
 print()
 
 print("💡 观察要点：")
-print("   - 无惩罚时，AI 可能重复使用'春天'、'万物'等高频词")
-print("   - frequency_penalty 会让重复用词的频率降低")
-print("   - presence_penalty 会鼓励 AI 引入更多新的意象和词汇")
-print("   - 设置过高（>2）可能导致文本变得不自然")
+print("   - Claude 不支持 frequency_penalty / presence_penalty 参数")
+print("   - 控制多样性主要通过 temperature 和 top_p")
+print("   - 也可以通过 system prompt 引导模型避免重复")
+print("   - 低温度 → 更保守、更可能重复；高温度 → 更多样")
 print()
 
 
@@ -436,40 +425,26 @@ def generate_with_strategy(prompt: str, task_type: str, system_prompt: str = "")
         AI 生成的文本
     """
     # 根据任务类型选择参数组合
+    # 注意：Claude 不支持同时设置 temperature 和 top_p，所以只保留 temperature
     strategies = {
         "code": {
             "temperature": 0.0,
-            "top_p": 1.0,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0,
             "max_tokens": 500,
         },
         "creative": {
             "temperature": 0.9,
-            "top_p": 0.95,
-            "frequency_penalty": 0.3,
-            "presence_penalty": 0.6,
             "max_tokens": 300,
         },
         "extract": {
             "temperature": 0.0,
-            "top_p": 1.0,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0,
             "max_tokens": 200,
         },
         "chat": {
             "temperature": 0.7,
-            "top_p": 0.9,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0,
             "max_tokens": 200,
         },
         "brainstorm": {
             "temperature": 1.0,
-            "top_p": 0.95,
-            "frequency_penalty": 0.5,
-            "presence_penalty": 1.0,
             "max_tokens": 300,
         },
     }

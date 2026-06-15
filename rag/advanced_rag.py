@@ -134,8 +134,9 @@ print("=" * 60)
 print("第 0 章：初始化 LLM 和 Embeddings")
 print("=" * 60)
 
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 CHAT_MODEL = "kivy-kimi-k2_5"
 EMBEDDING_MODEL = "BAAI/bge-small-zh-v1.5"
 

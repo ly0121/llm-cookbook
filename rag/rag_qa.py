@@ -102,8 +102,9 @@ print("=" * 60)
 
 # ── API 配置（和 langchain/chatbot.py 保持一致）──────────────
 # 教学用硬编码；生产环境请改用环境变量：os.environ["OPENAI_API_KEY"]
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 CHAT_MODEL = "kivy-kimi-k2_5"
 
 # 本地 Embedding 模型（HuggingFace Sentence Transformers）

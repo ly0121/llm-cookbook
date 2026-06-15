@@ -32,13 +32,9 @@
 # 初始化：OpenAI 客户端配置（和 native_api.py 完全一致）
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-from openai import OpenAI
-
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
-client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import client, MODEL_NAME
 
 
 # ── 工具函数：简化重复的 API 调用代码 ───────────────────────
@@ -75,7 +71,7 @@ print("=" * 60)
 print("第 0 章：角色设定（Role Prompting）")
 print("=" * 60)
 print()
-print("【实验】同一个问题"什么是递归？"，分别问两种角色：")
+print('【实验】同一个问题"什么是递归？"，分别问两种角色：')
 
 # ── 角色 A：幼儿园老师 ──────────────────────────────────────
 # 设定：用最简单的比喻，面向完全不懂技术的5岁小朋友
@@ -148,8 +144,8 @@ result_md = chat([
 show_result("格式B：Markdown 结构化", "指定标题级别+列表格式", result_md)
 
 print()
-print("  💡 启示：格式控制的关键是"具体"——不要说"用列表"，")
-print("     而要说"用 Markdown 无序列表，每项不超过20字"。")
+print('  💡 启示：格式控制的关键是"具体"——不要说"用列表"，')
+print('     而要说"用 Markdown 无序列表，每项不超过20字"。')
 print()
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -198,7 +194,7 @@ result_fewshot = chat(few_shot_messages, temperature=0.0)
 show_result("Few-Shot 情感分析", "3个示例教会AI自定义格式", result_fewshot)
 
 print()
-print("  💡 启示：Few-Shot 的威力在于"模式归纳"——")
+print('  💡 启示：Few-Shot 的威力在于"模式归纳"——')
 print("     AI 不需要你解释规则，它从示例中自动学会了：")
 print("     格式（情感|强度|关键词）、评分标准、输出长度。")
 print()

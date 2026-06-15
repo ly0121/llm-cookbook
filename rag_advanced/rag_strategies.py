@@ -83,10 +83,9 @@ from langchain_core.runnables import RunnablePassthrough
 print("\n[Step 0.1] 所有依赖导入成功 ✓")
 
 # ─── 0.2 API 配置 ───
-API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJBUkh6SlZ6Rm9ZZkZXZGdTTDF0Y292MGliRk5YU1J4WiJ9.MEUVU99Rh6CCLsHw4Fu4XcTSJURtbLDNFYxHERnW5qY"
-BASE_URL = "https://llm-gateway-proxy.inner.chj.cloud/llm-gateway/v1"
-MODEL_NAME = "kivy-kimi-k2_5"
-
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import API_KEY, BASE_URL, MODEL_NAME
 # ─── 0.3 初始化 LLM ───
 #
 # temperature=0.7: 生成假设性文档时需要一定创造力
