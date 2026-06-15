@@ -123,12 +123,16 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Claude Code local settings (may contain secrets in shell history)
+.claude/settings.local.json
 
 # Spyder project settings
 .spyderproject
