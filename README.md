@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.3.0+-green.svg)](https://python.langchain.com/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.6.0+-orange.svg)](https://langchain-ai.github.io/langgraph/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
@@ -48,13 +48,34 @@ source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### Configure API Keys
+### Configure API Key
+
+The project uses a centralized `config.py` that loads credentials from environment
+variables (or a local `.env` file via `python-dotenv`). Every demo imports the
+shared `client` and `MODEL_NAME` from there — you only need to configure once.
 
 ```bash
-# Set environment variable
-export OPENAI_API_KEY="your-api-key-here"
-# Or create .env file
-echo "OPENAI_API_KEY=your-api-key-here" > .env
+# 1. Copy the template
+cp .env.example .env
+
+# 2. Edit .env and fill in your real key
+#    LLM_API_KEY=your_key_here
+#    LLM_BASE_URL=https://...           (optional; default points to internal gateway)
+#    LLM_MODEL_NAME=aws-claude-sonnet-4-6 (optional)
+#    LLM_EMBEDDING_MODEL=...             (optional)
+#    LLM_JUDGE_MODEL=...                 (optional, for LLM-as-Judge eval)
+```
+
+The `.env` file is `.gitignore`-d, so your key never enters version control.
+Pure-local demos (e.g. `llm/tokenization_demo.py`) work without any key —
+`config.py` only validates the key when you actually call the API.
+
+In any script under a sub-directory, the unified import pattern is:
+
+```python
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import client, MODEL_NAME
 ```
 
 ---
@@ -142,28 +163,33 @@ Week 6:  Projects 16 → 17 → 18      (Advanced: Memory → RAG Strategies →
 
 ```
 llm-cookbook/
-├── llm/                    # Native LLM API calls
-├── langchain/              # LangChain core components
-├── rag/                    # RAG basics and advanced
-├── rag_advanced/           # Advanced RAG strategies
-├── agent/                  # Agent development
-├── langgraph/              # LangGraph multi-agent collaboration
-├── langgraph_advanced/     # Advanced LangGraph features
-├── structured_output/      # Structured output
-├── streaming/              # Streaming processing
-├── evaluation/             # RAG evaluation
-├── api_service/            # API service
-├── async_concurrent/       # Async concurrency
-├── vectordb/               # Vector store persistence
-├── guardrails/             # Safety guardrails
-├── observability/          # Observability
-├── error_handling/         # Fault tolerance
-├── memory_advanced/        # Advanced memory strategies
-├── document_etl/           # Document ETL processing
-├── self_reflection/        # Self-reflection
-├── docs/                   # Documentation
-├── requirements.txt        # Project dependencies
-└── LEARNING_ROADMAP.md     # Detailed learning roadmap
+├── config.py                # Shared LLM client + model config (loaded from .env)
+├── .env.example             # Template for environment variables
+├── llm/                     # LLM fundamentals: native API, tokenization, generation,
+│                            # transformer, embedding, RAG pipeline, function calling,
+│                            # evaluation, observability, security, data engineering
+├── langchain/               # LangChain core components
+├── rag/                     # RAG basics and advanced
+├── rag_advanced/            # Advanced RAG strategies (HyDE, Multi-Query, etc.)
+├── agent/                   # Agent development (ReAct, tool calling)
+├── langgraph/               # LangGraph multi-agent collaboration
+├── langgraph_advanced/      # Checkpointing, Human-in-the-Loop
+├── structured_output/       # Pydantic-driven structured output
+├── streaming/               # Streaming processing
+├── evaluation/              # RAG evaluation framework
+├── api_service/             # FastAPI + LangServe deployment
+├── async_concurrent/        # async/await, semaphore, timeout
+├── vectordb/                # Vector store persistence (FAISS/Chroma)
+├── guardrails/              # Safety guardrails (3-layer protection)
+├── observability/           # Tracing, structured logging, cost monitoring
+├── error_handling/          # Retry, fallback, fault tolerance
+├── memory_advanced/         # Window/summary/vector memory strategies
+├── self_reflection/         # Self-reflection / critic loop
+├── caching/                 # Response/embedding caching, document ETL
+├── docs/                    # VitePress documentation site
+├── pyproject.toml           # Project metadata, ruff/black/pytest config
+├── requirements.txt         # Pinned runtime dependencies
+└── LEARNING_ROADMAP.md      # Detailed learning roadmap
 ```
 
 ---
@@ -187,7 +213,7 @@ Issues and PRs are welcome! If you have good practical cases or improvement sugg
 
 ## 📄 License
 
-[MIT License](LICENSE.txt)
+[MIT License](LICENSE)
 
 ---
 

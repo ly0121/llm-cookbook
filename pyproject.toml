@@ -1,0 +1,99 @@
+[project]
+name = "llm-cookbook"
+version = "0.1.0"
+description = "LLM Cookbook — 大模型应用开发完全手册（21 个进阶实战项目）"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "ly0121" }]
+keywords = ["llm", "langchain", "rag", "agent", "tutorial"]
+
+# 真实依赖以 requirements.txt 为准（更易于增量安装）
+# 此处仅声明运行最小集合，便于 `pip install -e .`
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langchain-community>=0.3.0",
+    "langgraph>=0.6.0",
+    "openai>=1.0.0",
+    "tiktoken>=0.7.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+]
+
+[project.optional-dependencies]
+rag = [
+    "langchain-chroma>=0.2.0",
+    "langchain-huggingface>=0.1.0",
+    "faiss-cpu>=1.7.4",
+    "sentence-transformers>=2.2.0",
+]
+api = [
+    "langserve>=0.3.0",
+    "sse-starlette>=1.0.0",
+]
+dev = [
+    "ruff>=0.6.0",
+    "black>=24.0.0",
+    "pytest>=8.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ly0121/llm-cookbook"
+Documentation = "https://ly0121.github.io/llm-cookbook/"
+
+# ---------------------------------------------------------------------------
+# 工具配置
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+    ".venv",
+    "docs/node_modules",
+    "docs/.vitepress/dist",
+    "docs/.vitepress/cache",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+]
+ignore = [
+    "E501",   # line too long（demo 代码里有超长 ASCII 图）
+    "E402",   # module-level import not at top（子目录脚本需 sys.path 注入）
+    "B008",   # function call in default argument
+]
+
+[tool.ruff.lint.per-file-ignores]
+"llm/*.py" = ["E741"]  # demo 中常见单字母变量
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+extend-exclude = """
+/(
+    \\.venv
+  | docs/node_modules
+)/
+"""
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --tb=short"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# 这是教学项目，不打 wheel；声明空 packages 避免 setuptools 自动扫描报错
+packages = []
