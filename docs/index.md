@@ -17,6 +17,9 @@ hero:
       link: https://github.com/ly0121/llm-cookbook
 
 features:
+  - icon: 🌱
+    title: ML 基础（前置补课）
+    details: 经典机器学习 + 深度学习 + 经典 NLP，零基础也能踏入 LLM 之门，所有 demo Mac CPU 可跑
   - icon: 🧠
     title: LLM 基础理论
     details: Transformer 架构、注意力机制、生成策略、微调与对齐，从数学公式到直觉理解

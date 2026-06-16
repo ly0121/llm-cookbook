@@ -177,3 +177,8 @@ cython_debug/
 .vscode/
 /.devcontainer
 .\frontend\vite.config.js
+
+# ML 板块生成的可视化与数据缓存
+ml_foundations/**/figures/
+ml_foundations/**/data/
+ml_foundations/**/runs/

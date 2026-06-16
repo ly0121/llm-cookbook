@@ -20,6 +20,7 @@ This is a systematic LLM application development learning project. Through 21 pr
 ## 📚 Learning Path Overview
 
 ```
+ML Foundations (Optional)      → Classical ML, deep learning, classic NLP — the prerequisites
 Fundamentals (Projects 0-1)    → Master LLM APIs and LangChain core components
 RAG (Projects 2-5)             → From basic RAG to advanced retrieval strategies
 Agent (Projects 3-4)           → ReAct Agent + Multi-Agent collaboration
@@ -81,6 +82,20 @@ from config import client, MODEL_NAME
 ---
 
 ## 📖 Project Checklist
+
+### 0. ML Foundations — Prerequisites for LLM (Optional)
+
+Before diving into LLM application development, this section provides a foundation in classical machine learning, deep learning, and classic NLP. **Skip if you already have ML background.**
+
+| Module | Directory | Core Concepts |
+|--------|-----------|---------------|
+| Classical ML | `ml_foundations/classical/` | Logistic Regression, Decision Tree, Random Forest, Ridge/Lasso, K-Means, Pipeline + Feature Engineering |
+| Deep Learning | `ml_foundations/deep_learning/` | PyTorch tensors & autograd, MLP from scratch, MLP/CNN on MNIST, Char-level LSTM language model |
+| NLP Foundations | `ml_foundations/nlp_foundations/` | Chinese/English preprocessing (jieba/NLTK), TF-IDF + Naive Bayes/SVM classification, Word2Vec + analogical reasoning |
+
+All demos run on **Mac CPU within 3 minutes**, no GPU or LLM API key required. See `docs/ml-foundations/` for the corresponding theory chapters covering the bridge from classical ML to LLM internals (e.g. *why MLP = Transformer FFN sublayer*, *why LoRA is a low-rank regularizer*, *why BM25 still matters in RAG*).
+
+**After completing:** You can confidently read LLM literature, debug fine-tuning pipelines, and understand why Transformer replaced RNN.
 
 ### 1. Fundamentals — Getting Started with LLM Application Development
 
@@ -165,6 +180,8 @@ Week 6:  Projects 16 → 17 → 18      (Advanced: Memory → RAG Strategies →
 llm-cookbook/
 ├── config.py                # Shared LLM client + model config (loaded from .env)
 ├── .env.example             # Template for environment variables
+├── ml_foundations/          # ML prerequisites: classical ML, deep learning, classic NLP
+│                            # (sklearn / PyTorch / gensim / jieba — all CPU-runnable)
 ├── llm/                     # LLM fundamentals: native API, tokenization, generation,
 │                            # transformer, embedding, RAG pipeline, function calling,
 │                            # evaluation, observability, security, data engineering

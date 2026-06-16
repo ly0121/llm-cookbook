@@ -19,6 +19,7 @@ export default defineConfig({
       {
         text: "知识模块",
         items: [
+          { text: "ML 基础（前置）", link: "/ml-foundations/" },
           { text: "LLM 基础", link: "/llm/" },
           { text: "LangChain", link: "/langchain/" },
           { text: "RAG 检索增强", link: "/rag/" },
@@ -35,6 +36,18 @@ export default defineConfig({
           items: [
             { text: "快速开始", link: "/guide/getting-started" },
             { text: "学习路线", link: "/guide/roadmap" },
+          ],
+        },
+        {
+          text: "零、ML 基础（前置补课）",
+          collapsed: true,
+          items: [
+            { text: "本章导读", link: "/ml-foundations/" },
+            { text: "经典机器学习", link: "/ml-foundations/classical-ml" },
+            { text: "深度学习基础", link: "/ml-foundations/deep-learning" },
+            { text: "NLP 经典基础", link: "/ml-foundations/nlp-foundations" },
+            { text: "ML 与 LLM 的关系", link: "/ml-foundations/ml-vs-llm" },
+            { text: "进阶学习路径", link: "/ml-foundations/learning-path" },
           ],
         },
         {
