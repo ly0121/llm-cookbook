@@ -30,7 +30,7 @@
 """
 
 import numpy as np
-from sklearn.datasets import fetch_california_housing
+from sklearn.datasets import fetch_california_housing, load_diabetes
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
@@ -40,10 +40,17 @@ np.random.seed(42)
 
 
 def load_data():
-    """加载 California 房价数据。"""
-    data = fetch_california_housing()
+    """加载回归数据集:优先 California 房价(8 特征),离线降级 diabetes(10 特征)。"""
+    try:
+        data = fetch_california_housing()
+        ds_name = "California 房价"
+    except Exception as e:
+        print(f"  ⚠ California 数据集下载失败({type(e).__name__}),降级使用 diabetes 数据集")
+        data = load_diabetes()
+        ds_name = "diabetes(糖尿病进展)"
+
     X, y = data.data, data.target
-    feature_names = data.feature_names
+    feature_names = list(data.feature_names)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
@@ -55,7 +62,7 @@ def load_data():
     X_test = scaler.transform(X_test)
 
     print("─" * 60)
-    print(f"数据集: california_housing  |  特征 {X.shape[1]} 维")
+    print(f"数据集: {ds_name}  |  特征 {X.shape[1]} 维")
     print(f"训练: {len(X_train)} 条  |  测试: {len(X_test)} 条")
     print(f"目标: 房价中位数(单位: 10万美元)")
     print(f"特征: {list(feature_names)}")
