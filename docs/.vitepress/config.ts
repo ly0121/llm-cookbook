@@ -51,6 +51,19 @@ export default defineConfig({
           ],
         },
         {
+          text: "零.5、Transformer 训练实战",
+          collapsed: true,
+          items: [
+            { text: "本章导读", link: "/ml-foundations/transformer-training/" },
+            { text: "BPE Tokenization", link: "/ml-foundations/transformer-training/tokenization" },
+            { text: "自注意力机制", link: "/ml-foundations/transformer-training/attention" },
+            { text: "位置编码", link: "/ml-foundations/transformer-training/positional-encoding" },
+            { text: "完整训练流程", link: "/ml-foundations/transformer-training/training" },
+            { text: "文本生成与采样", link: "/ml-foundations/transformer-training/generation" },
+            { text: "推理优化与 KV Cache", link: "/ml-foundations/transformer-training/inference" },
+          ],
+        },
+        {
           text: "一、LLM 基础",
           collapsed: false,
           items: [

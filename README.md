@@ -97,6 +97,27 @@ All demos run on **Mac CPU within 3 minutes**, no GPU or LLM API key required. S
 
 **After completing:** You can confidently read LLM literature, debug fine-tuning pipelines, and understand why Transformer replaced RNN.
 
+### 0.5 Transformer Training from Scratch
+
+A self-contained walkthrough of building a small GPT-style model:
+BPE tokenizer → attention from scratch → positional encoding (sin/learned/RoPE)
+→ ~3M-parameter GPT training on Tiny Shakespeare → sampling strategies
+(greedy/temp/top-k/top-p) → attention heatmap visualization → KV cache
+inference optimization.
+
+| Module | Directory | Core Concepts |
+|--------|-----------|---------------|
+| Transformer Training | `ml_foundations/transformer_training/` | 7 demos covering tokenization, attention, position encoding, training, generation, visualization, KV cache |
+
+Main training (`gpt_train.py`) runs in **~5-6 min on Mac CPU / ~30 s on MPS**;
+all other demos run in under 1 min. See `docs/ml-foundations/transformer-training/`
+for the corresponding theory chapters (BPE, scaled dot-product attention, RoPE,
+AdamW + cosine warmup, sampling strategies, KV cache + PagedAttention).
+
+**After completing:** You can read nanoGPT / GPT-2 / LLaMA source code without
+losing the thread, explain every hyperparameter in an LLM training config, and
+implement KV cache yourself.
+
 ### 1. Fundamentals — Getting Started with LLM Application Development
 
 | # | Project | Directory | Core Concepts |
@@ -180,7 +201,8 @@ Week 6:  Projects 16 → 17 → 18      (Advanced: Memory → RAG Strategies →
 llm-cookbook/
 ├── config.py                # Shared LLM client + model config (loaded from .env)
 ├── .env.example             # Template for environment variables
-├── ml_foundations/          # ML prerequisites: classical ML, deep learning, classic NLP
+├── ml_foundations/          # ML prerequisites: classical ML, deep learning, classic NLP,
+│                            # transformer training from scratch (BPE → GPT → KV cache)
 │                            # (sklearn / PyTorch / gensim / jieba — all CPU-runnable)
 ├── llm/                     # LLM fundamentals: native API, tokenization, generation,
 │                            # transformer, embedding, RAG pipeline, function calling,

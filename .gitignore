@@ -180,5 +180,9 @@ cython_debug/
 
 # ML 板块生成的可视化与数据缓存
 ml_foundations/**/figures/
-ml_foundations/**/data/
 ml_foundations/**/runs/
+
+# Phase 2: Transformer training artifacts
+ml_foundations/transformer_training/data/ckpt.pt
+ml_foundations/transformer_training/data/loss_log.json
+ml_foundations/transformer_training/data/runs/
