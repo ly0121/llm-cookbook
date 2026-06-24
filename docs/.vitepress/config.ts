@@ -64,6 +64,21 @@ export default defineConfig({
           ],
         },
         {
+          text: "零.6、训练后期与对齐",
+          collapsed: true,
+          items: [
+            { text: "0. 全景", link: "/ml-foundations/post-training/" },
+            { text: "0. 全景（独立页）", link: "/ml-foundations/post-training/overview" },
+            { text: "1. SFT", link: "/ml-foundations/post-training/sft" },
+            { text: "2. LoRA", link: "/ml-foundations/post-training/lora" },
+            { text: "3. QLoRA", link: "/ml-foundations/post-training/qlora" },
+            { text: "4. DPO", link: "/ml-foundations/post-training/dpo" },
+            { text: "5. 量化", link: "/ml-foundations/post-training/quantization" },
+            { text: "6. 评估", link: "/ml-foundations/post-training/evaluation" },
+            { text: "7. 选型决策", link: "/ml-foundations/post-training/selection" },
+          ],
+        },
+        {
           text: "一、LLM 基础",
           collapsed: false,
           items: [

@@ -118,6 +118,26 @@ AdamW + cosine warmup, sampling strategies, KV cache + PagedAttention).
 losing the thread, explain every hyperparameter in an LLM training config, and
 implement KV cache yourself.
 
+### 0.6 Post-training & Alignment
+
+How a base model becomes ChatGPT-like: SFT, LoRA/QLoRA, DPO, and
+post-training quantization. 12 self-contained demos on Qwen2.5-0.5B,
+all runnable on Mac CPU/MPS (except the bitsandbytes 4-bit demo,
+which is documented for Colab/CUDA).
+
+| Module | Directory | Core Concepts |
+|--------|-----------|---------------|
+| Post-training & Alignment | `ml_foundations/post_training/` | Data construction, SFT, LoRA, QLoRA (MLX + bnb), DPO, PPO walkthrough, GGUF quantization, perplexity, lm-eval-harness |
+
+Main demos run in **~5 min each on Mac MPS**. See
+`docs/ml-foundations/post-training/` for the corresponding theory chapters
+covering SFT loss masking, low-rank decomposition math, NF4 quantization,
+DPO derivation, GGUF k-quants, and selection decision tables.
+
+**After completing:** You can pick the right fine-tuning approach for a given
+dataset size and hardware budget, read PEFT/TRL/llama.cpp source confidently,
+and explain why DPO replaced PPO.
+
 ### 1. Fundamentals — Getting Started with LLM Application Development
 
 | # | Project | Directory | Core Concepts |

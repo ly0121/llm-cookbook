@@ -34,3 +34,16 @@ torchvision>=0.15.0              # MNIST 数据集
 gensim>=4.3.0                    # Word2Vec
 nltk>=3.8.0                      # 英文 NLP 预处理
 jieba>=0.42.1                    # 中文分词
+
+# ===== Phase 3: 训练后期与对齐（按需安装）=====
+transformers>=4.45.0
+peft>=0.13.0
+trl>=0.11.0
+datasets>=3.0.0
+accelerate>=1.0.0
+
+# 可选依赖（不影响其他 demo）:
+# bitsandbytes>=0.43.0     # 07_qlora_peft_bnb / 10_quantization 用，仅 CUDA
+# llama-cpp-python>=0.3.0  # 10_quantization 用（推理）
+# mlx-lm>=0.20.0           # 06_qlora_mlx 用，仅 Apple Silicon
+# lm-eval>=0.4.0           # 12_eval_lm_harness 用

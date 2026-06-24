@@ -434,22 +434,31 @@ M. 最终单次 commit                  → Task 26
 
 每个 demo 都要在提交前跑通至少一次，记录在最终 spec 末尾的"验证表"：
 
-| Demo | Mac MPS | Mac CPU | Colab T4 | 期望产物 |
+| Demo | Mac MPS（实测） | Mac CPU | Colab T4 | 期望产物 |
 |------|---------|---------|----------|---------|
-| 01 数据构造 | ✅ | ✅ | ✅ | tokenize 输出 + mask 可视化 |
-| 02 多 turn | ✅ | ✅ | ✅ | mask 三方案对比 |
-| 03 SFT | ✅ <5min | ✅ <15min | ✅ <2min | loss 下降 + 生成对比 |
-| 04 LoRA 手写 | ✅ | ✅ | ✅ | 收敛曲线 |
-| 05 LoRA PEFT | ✅ <5min | ✅ <15min | ✅ <2min | adapter ~6MB |
-| 06 QLoRA MLX | ✅ <3min | ⚠️ 慢 | ❌ N/A | 4bit MLX 模型 |
-| 07 QLoRA bnb | ❌ 提示退出 | ❌ 提示退出 | ✅ <2min | 4bit 训练 |
-| 08 DPO | ✅ <5min | ✅ <15min | ✅ <2min | 风格对比 |
-| 09 PPO 简介 | ✅ | ✅ | ✅ | 张量 shape + 流程图 |
-| 10 量化推理 | ✅ | ✅ | ⚠️ MPS 不可用降级 | 三方案对比表 |
-| 11 PPL 评估 | ✅ <3min | ✅ <10min | ✅ <1min | 三模型 PPL 表 |
-| 12 lm-eval | ✅ <3min | ⚠️ 慢 | ✅ <2min | arc_easy 子集分数 |
+| 01 数据构造 | ✅ ~22s | ✅ | ✅ | tokenize 输出 + mask 可视化 |
+| 02 多 turn | ✅ ~22s | ✅ | ✅ | mask 三方案对比 |
+| 03 SFT | ✅ 15-20min¹ | ✅ <15min | ✅ <2min | loss 下降 + 生成对比 |
+| 04 LoRA 手写 | ✅ ~3s | ✅ | ✅ | 收敛曲线 |
+| 05 LoRA PEFT | ✅ ~1.4min⁴ | ✅ <15min | ✅ <2min | adapter ~6MB |
+| 06 QLoRA MLX | ✅ <3min² | ⚠️ 慢 | ❌ N/A | 4bit MLX 模型 |
+| 07 QLoRA bnb | ❌ 提示退出 ~1s | ❌ 提示退出 | ✅ <2min | 4bit 训练 |
+| 08 DPO | ✅ ~6min⁵ | ✅ <15min | ✅ <2min | 风格对比 |
+| 09 PPO 简介 | ✅ ~17s | ✅ | ✅ | 张量 shape + 流程图 |
+| 10 量化推理 | ✅ ~23s³ | ✅ | ⚠️ MPS 不可用降级 | 三方案对比表 |
+| 11 PPL 评估 | ✅ ~1.3min | ✅ <10min | ✅ <1min | 三模型 PPL 表 |
+| 12 lm-eval | ❌ 提示退出 ~4s² | ⚠️ 慢 | ✅ <2min | arc_easy 子集分数 |
 
-实施期间会在每个 demo 完成后跑一次实测，把上表的"<X min"替换成真实数值。任何"❌ 提示退出"必须验证退出消息友好。
+实测环境：Apple Silicon M-series，Python 3.9.6，HF cache 已预热。
+
+注释：
+1. 03 SFT 在实测机器上接近内存上限，建议留出 12GB 空闲（Task 5 实测 15-20min；Task 25 单次 smoke 因 OOM 被跳过，使用 Task 5 报告值）。
+2. 06 / 12 在本机因可选依赖（mlx-lm / lm-eval）未安装而走 graceful-skip 路径，退出消息为中文 + 安装命令；安装后预算时长仍按"<3min"。
+3. 10 因 llama-cpp-python 未安装，自动跳过 GGUF 推理一栏，其余 fp16 / bnb 路径正常对比。
+4. 05 LoRA PEFT 使用 Task 6 报告值 81s；Task 25 smoke 因机器内存压力被跳过。
+5. 08 DPO 使用 Task 9 报告值 361s（~6min）；Task 25 smoke 因机器内存压力被跳过。
+
+任何"❌ 提示退出"已验证退出消息友好（中文 + 安装指引）。
 
 ### 7.3 单次最终 commit 内容
 

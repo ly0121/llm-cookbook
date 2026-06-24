@@ -186,3 +186,9 @@ ml_foundations/**/runs/
 ml_foundations/transformer_training/data/ckpt.pt
 ml_foundations/transformer_training/data/loss_log.json
 ml_foundations/transformer_training/data/runs/
+
+# Phase 3: Post-training artifacts
+ml_foundations/post_training/runs/
+ml_foundations/post_training/data/wikitext_cache/
+ml_foundations/post_training/data/lm_eval_cache/
+*.gguf

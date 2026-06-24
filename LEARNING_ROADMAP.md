@@ -200,6 +200,31 @@ folder/
 
 ---
 
+### 零.6、训练后期与对齐（Phase 3）
+
+> 目录：`ml_foundations/post_training/`
+
+| 编号 | 文件名 | 核心知识点 |
+|------|--------|-----------|
+| 01 | 01_data_construction.py | Alpaca/ShareGPT/Chat 三种数据格式 |
+| 02 | 02_multi_turn_chat.py | 多轮 prompt mask + EOS |
+| 03 | 03_sft_full.py | 全参 SFT loss 曲线（baseline） |
+| 04 | 04_lora_from_scratch.py | 从零写 LoRA（W₀ + αBA/r 数学） |
+| 05 | 05_lora_peft.py | PEFT LoRA API + adapter 保存合并 |
+| 06 | 06_qlora_mlx.py | Apple MLX 4bit + LoRA（Mac 路线） |
+| 07 | 07_qlora_peft_bnb.py | bitsandbytes 4bit NF4（CUDA 路线，Mac 跳过） |
+| 08 | 08_dpo_alignment.py | TRL DPO 训练 preference dataset |
+| 09 | 09_ppo_intro.py | PPO 4 模型协作教学版（与 DPO 对照） |
+| 10 | 10_quantization_inference.py | fp16 / GGUF Q4_K_M / bnb 8bit 推理三方对比 |
+| 11 | 11_eval_perplexity.py | WikiText PPL: base / SFT / DPO |
+| 12 | 12_eval_lm_harness.py | lm-evaluation-harness arc_easy 子集 |
+
+**推荐学习顺序：** 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12
+
+先跑 01-02 理解数据格式，再跑 03 建立全参 SFT baseline，然后 04-05 对比手写 LoRA 与 PEFT API，06-07 走量化路线（Mac 用 06，CUDA 用 07），08-09 学对齐方法（DPO 是现代主流，09 仅作 PPO 教学对照），最后 10-12 覆盖量化推理与评估闭环。
+
+---
+
 ## 知识文档索引
 
 每个 KNOWLEDGE.md 都是一份独立的教科书级文档，可单独阅读：
@@ -240,6 +265,7 @@ Week 6:  evaluation/ → guardrails/         (质量：评估 → 安全)
 Week 7:  api_service/ → async_concurrent/  (部署：服务化 → 并发)
 Week 8:  error_handling/ → caching/ → observability/  (运维：容错 → 缓存 → 监控)
 Week 9:  memory_advanced/ → self_reflection/ → langgraph_advanced/  (高阶)
+Week 0.6: post_training/01 → 12  (训练后期与对齐)
 ```
 
 ---
